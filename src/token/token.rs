@@ -1,6 +1,12 @@
 use crate::tags::Tag;
 
-use crate::constants::exp_tags::{NUMBER, ADD_OP, MUL_OP, LPAR, RPAR, END_MARK, ERROR};
+const ADD_OP: u32 = 0;
+const MUL_OP: u32 = 1;
+const LPAR: u32 = 2;
+const RPAR: u32 = 3;
+const NUMBER: u32= 4;
+const END_MARK: u32 = 5;
+const ERROR: u32 = u32::MAX;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum AddOp {
@@ -24,6 +30,14 @@ pub enum Token {
     EndMark(Tag),
     Error(Tag, &'static str),
 }
+
+pub const NUM: Tag = Tag::new(crate::tags::Type::TERMINAL, NUMBER);
+pub const ADD: Tag = Tag::new(crate::tags::Type::TERMINAL, ADD_OP);
+pub const MUL: Tag = Tag::new(crate::tags::Type::TERMINAL, MUL_OP);
+pub const LPR: Tag = Tag::new(crate::tags::Type::TERMINAL, LPAR);
+pub const RPR: Tag = Tag::new(crate::tags::Type::TERMINAL, RPAR);
+pub const END: Tag = Tag::new(crate::tags::Type::TERMINAL, END_MARK);
+pub const ERR: Tag = Tag::new(crate::tags::Type::TERMINAL, ERROR);
 
 pub trait Scanner {
     fn next_token(&mut self) -> Token;
@@ -58,49 +72,51 @@ impl Scanner for Expression {
                             continue;
                         }
                         Some(c) if c.is_digit(10) => {
-                            state = 1;
                             lexema.push(c);
                             self.current_position += 1;
+                            state = 1;
                             continue;
                         }
                         Some('+') => {
-                            let tag = Tag::new(crate::tags::Type::TERMINAL, ADD_OP);
                             self.current_position += 1;
-                            return Token::AddOperator(tag, AddOp::Plus);
+                            state = 3;
+                            continue;
                         }
                         Some('-') => {
-                            let tag = Tag::new(crate::tags::Type::TERMINAL, ADD_OP);
                             self.current_position += 1;
-                            return Token::AddOperator(tag, AddOp::Minus);
+                            state = 4;
+                            continue;
                         }
                         Some('*') => {
-                            let tag = Tag::new(crate::tags::Type::TERMINAL, MUL_OP);
                             self.current_position += 1;
-                            return Token::MulOperator(tag, MulOp::Times);
+                            state = 5;
+                            continue;
                         }
                         Some('/') => {
-                            let tag = Tag::new(crate::tags::Type::TERMINAL, MUL_OP);
                             self.current_position += 1;
-                            return Token::MulOperator(tag, MulOp::Divide);
+                            state = 6;
+                            continue;
                         }
                         Some('(') => {
-                            let tag = Tag::new(crate::tags::Type::TERMINAL, LPAR);
                             self.current_position += 1;
-                            return Token::LPar(tag);
+                            state = 7;
+                            continue;
                         }
                         Some(')') => {
-                            let tag = Tag::new(crate::tags::Type::TERMINAL, RPAR);
                             self.current_position += 1;
-                            return Token::RPar(tag);
+                            state = 8;
+                            continue;
                         }
                         Some('#') => {
-                            let tag = Tag::new(crate::tags::Type::TERMINAL, END_MARK);
                             self.current_position += 1;
-                            return Token::EndMark(tag);
+                            state = 9;
+                            continue;
                         }
-                        _ => {
-                            let tag = Tag::new(crate::tags::Type::TERMINAL, ERROR);
-                            return Token::Error(tag, "Caracter inválido");
+                        Some(c) => {
+                            lexema.push(c);
+                            self.current_position += 1;
+                            state = 10;
+                            continue;
                         }
                     }
                 }
@@ -122,12 +138,35 @@ impl Scanner for Expression {
                 2 => {
                     self.current_position -= 1; // RETRACT
                     let value = lexema.parse::<i32>().unwrap();
-                    let tag = Tag::new(crate::tags::Type::TERMINAL, NUMBER);
-                    return Token::Number(tag, value);
+                    return Token::Number(NUM, value);
+                }
+                3 => {
+                    return Token::AddOperator(ADD, AddOp::Plus);
+                }
+                4 => {
+                    return Token::AddOperator(ADD, AddOp::Minus);
+                }
+                5 => {
+                    return Token::MulOperator(MUL, MulOp::Times);
+                }
+                6 => {
+                    return Token::MulOperator(MUL, MulOp::Divide);
+                }
+                7 => {
+                    return Token::LPar(LPR);
+                }
+                8 => {
+                    return Token::RPar(RPR);
+                }
+                9 => {
+                    return Token::EndMark(END);
+                }
+                10 => {
+                    self.current_position -= 1; // RETRACT
+                    return Token::Error(ERR, format!("Caracter inválido: {}", lexema).as_str());
                 }
                 _ => {
-                    let tag = Tag::new(crate::tags::Type::TERMINAL, ERROR);
-                    return Token::Error(tag, "Caracter inválido");
+                    return Token::Error(ERR, "Caracter inválido");
                 }
             }
         }

@@ -1,9 +1,9 @@
-mod constants;
+mod variable;
 mod tags;
 mod token;
 
 use compiler::token::{Expression, Scanner, Token};
-use constants::{E, E_, T, T_, F};
+use variable::{E, E_, T, T_, F};
 
 
 fn main() {
@@ -40,6 +40,10 @@ fn test_scanner() {
         println!("Token: {:?}", token);
 
         if matches!(token, Token::EndMark(_)) {
+            break;
+        }
+
+        if matches!(token, Token::Error(_, _)) {
             break;
         }
     }
