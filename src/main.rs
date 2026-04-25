@@ -1,3 +1,4 @@
+
 mod variable;
 mod tags;
 mod token;
@@ -32,12 +33,13 @@ fn test_tags() {
 }
 
 fn test_scanner() {
-    let expr_text = "43*(2 + 34) - 123 / (2 - 34) #";
+    // let expr_text = "let x  43 * (y + 34) - foo / (if 2 - 34) #";
+    let expr_text = "as break const continue crate else enum extern     fn     if     in let loop match mod move mut pub ref return self Self static struct super trait true type unsafe use where while async await dyn id";
     let mut expr = Expression::new(expr_text);
 
     loop {
         let token = expr.next_token();
-        println!("Token: {:?}", token);
+        println!("Token: {:?}", token.clone());
 
         if matches!(token, Token::EndMark(_)) {
             break;
