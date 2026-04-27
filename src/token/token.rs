@@ -130,6 +130,96 @@ impl Scanner for Expression {
                             state = 8;
                             continue;
                         }
+                        Some('!') => {
+                            self.advance();
+                            state = 100;
+                            continue;
+                        }
+                        Some('%') => {
+                            self.advance();
+                            state = 101;
+                            continue;
+                        }
+                        Some('&') => {
+                            self.advance();
+                            state = 102;
+                            continue;
+                        }
+                        Some('*') => {
+                            self.advance();
+                            state = 103;
+                            continue;
+                        }
+                        Some('+') => {
+                            self.advance();
+                            state = 104;
+                            continue;
+                        }
+                        Some(',') => {
+                            self.advance();
+                            state = 105;
+                            continue;
+                        }
+                        Some('-') => {
+                            self.advance();
+                            state = 106;
+                            continue;
+                        }
+                        Some('.') => {
+                            self.advance();
+                            state = 107;
+                            continue;
+                        }
+                        Some('/') => {
+                            self.advance();
+                            state = 108;
+                            continue;
+                        }
+                        Some(':') => {
+                            self.advance();
+                            state = 109;
+                            continue;
+                        }
+                        Some(';') => {
+                            self.advance();
+                            state = 110;
+                            continue;
+                        }
+                        Some('<') => {
+                            self.advance();
+                            state = 111;
+                            continue;
+                        }
+                        Some('=') => {
+                            self.advance();
+                            state = 112;
+                            continue;
+                        }
+                        Some('>') => {
+                            self.advance();
+                            state = 113;
+                            continue;
+                        }
+                        Some('@') => {
+                            self.advance();
+                            state = 114;
+                            continue;
+                        }
+                        Some('^') => {
+                            self.advance();
+                            state = 115;
+                            continue;
+                        }
+                        Some('|') => {
+                            self.advance();
+                            state = 116;
+                            continue;
+                        }
+                        Some('?') => {
+                            self.advance();
+                            state = 117;
+                            continue;
+                        }
                         Some('#') => {
                             self.advance();
                             state = 9;
@@ -213,6 +303,84 @@ impl Scanner for Expression {
                         _ => return Token::Identifier(IDENTIFIER, lexema),
                     }
                 }
+
+
+                100 => {
+                        {	ident!(...), ident!{...}, ident![...]	Macro expansion	
+!	!expr	Bitwise or logical complement	Not
+!=	expr != expr	Nonequality comparison	PartialEq
+                101 => {
+                        expr % expr	Arithmetic remainder	Rem
+%=	var %= expr	Arithmetic remainder and assignment	RemAssign
+                102 => {
+                        &expr, &mut expr	Borrow	
+&	&type, &mut type, &'a type, &'a mut type	Borrowed pointer type	
+&	expr & expr	Bitwise AND	BitAnd
+&=	var &= expr	Bitwise AND and assignment	BitAndAssign
+&&	expr && expr	Short-circuiting logical AND	
+                103 => {
+                        expr * expr	Arithmetic multiplication	Mul
+*=	var *= expr	Arithmetic multiplication and assignment	MulAssign
+*	*expr	Dereference	Deref
+*	*const type, *mut type	Raw pointer	
+                104 => {
+                        trait + trait, 'a + trait	Compound type constraint	
++	expr + expr	Arithmetic addition	Add
++=	var += expr	Arithmetic addition and assignment	AddAssign
+                105 => {
+                        // expr, expr	Argument and element separator	
+                106 => {
+                        - expr	Arithmetic negation	Neg
+-	expr - expr	Arithmetic subtraction	Sub
+-=	var -= expr	Arithmetic subtraction and assignment	SubAssign
+->	fn(...) -> type, |…| -> type	Function and closure return type	
+                107 => {
+                        expr.ident	Field access	
+.	expr.ident(expr, ...)	Method call	
+.	expr.0, expr.1, and so on	Tuple indexing	
+..	.., expr.., ..expr, expr..expr	Right-exclusive range literal	PartialOrd
+..=	..=expr, expr..=expr	Right-inclusive range literal	PartialOrd
+..	..expr	Struct literal update syntax	
+..	variant(x, ..), struct_type { x, .. }	“And the rest” pattern binding	
+                108 => {
+                        expr / expr	Arithmetic division	Div
+/=	var /= expr	Arithmetic division and assignment	DivAssign
+                109 => {
+                        pat: type, ident: type	Constraints	
+:	ident: expr	Struct field initializer	
+:	'a: loop {...}	Loop label	
+                110 => {
+                        expr;	Statement and item terminator	
+;	[...; len]	Part of fixed-size array syntax	
+                111 => {
+                        <	expr << expr	Left-shift	Shl
+<<=	var <<= expr	Left-shift and assignment	ShlAssign
+<	expr < expr	Less than comparison	PartialOrd
+<=	expr <= expr	Less than or equal to comparison	PartialOrd
+                112 => {
+                        var = expr, ident = type	Assignment/equivalence	
+==	expr == expr	Equality comparison	PartialEq
+=>	pat => expr	Part of match arm syntax	
+                113 => {
+                        expr > expr	Greater than comparison	PartialOrd
+>=	expr >= expr	Greater than or equal to comparison	PartialOrd
+>>	expr >> expr	Right-shift	Shr
+>>=	var >>= expr	Right-shift and assignment	ShrAssign
+                114 => {
+                        ident @ pat	Pattern binding	
+                115 => {
+                        expr ^ expr	Bitwise exclusive OR	BitXor
+^=	var ^= expr	Bitwise exclusive OR and assignment	BitXorAssign
+                116 => {
+                        pat | pat	Pattern alternatives	
+|	expr | expr	Bitwise OR	BitOr
+|=	var |= expr	Bitwise OR and assignment	BitOrAssign
+||	expr || expr	Short-circuiting logical OR	
+                117 => {
+                        expr?	Error propagation
+
+                     
+                
                 999 => {
                     self.retract();
                     return Token::Error(ERR, format!("Caracter inválido: {}", lexema));
@@ -224,6 +392,76 @@ impl Scanner for Expression {
         }
     }
 }
+
+pub enum SymbolContext {
+    Expression,
+    Declaration,
+    CompoundTypeConstraint,
+    Pattern,
+    
+!	ident!(...), ident!{...}, ident![...]	Macro expansion
+    
+!	!expr	Bitwise or logical complement	Not                                Expression,
+!=	expr != expr	Nonequality comparison	PartialEq                          Expression,
+%	expr % expr	Arithmetic remainder	Rem                                    Expression,
+%=	var %= expr	Arithmetic remainder and assignment	RemAssign                  Expression,
+
+    &	&expr, &mut expr	Borrow	                                           Expression,
+    &	&type, &mut type, &'a type, &'a mut type	Borrowed pointer type	   Declaration,
+&&	expr && expr	Short-circuiting logical AND	                           Expression,
+*	expr * expr	Arithmetic multiplication	Mul                                Expression,
+*=	var *= expr	Arithmetic multiplication and assignment	MulAssign          Expression,
+*	*expr	Dereference	Deref                                                  Expression,
+*	*const type, *mut type	Raw pointer	                                       Declaration,
++	trait + trait, 'a + trait	Compound type constraint	
++	expr + expr	Arithmetic addition	Add
++=	var += expr	Arithmetic addition and assignment	AddAssign
+,	expr, expr	Argument and element separator	
+-	- expr	Arithmetic negation	Neg
+-	expr - expr	Arithmetic subtraction	Sub
+-=	var -= expr	Arithmetic subtraction and assignment	SubAssign
+->	fn(...) -> type, |…| -> type	Function and closure return type	
+.	expr.ident	Field access	
+.	expr.ident(expr, ...)	Method call	
+.	expr.0, expr.1, and so on	Tuple indexing	
+..	.., expr.., ..expr, expr..expr	Right-exclusive range literal	PartialOrd
+..=	..=expr, expr..=expr	Right-inclusive range literal	PartialOrd
+..	..expr	Struct literal update syntax	
+..	variant(x, ..), struct_type { x, .. }	“And the rest” pattern binding	
+...	expr...expr	(Deprecated, use ..= instead) In a pattern: inclusive range pattern	
+/	expr / expr	Arithmetic division	Div
+/=	var /= expr	Arithmetic division and assignment	DivAssign
+:	pat: type, ident: type	Constraints	
+:	ident: expr	Struct field initializer	
+:	'a: loop {...}	Loop label	
+;	expr;	Statement and item terminator	
+;	[...; len]	Part of fixed-size array syntax	
+<<	expr << expr	Left-shift	Shl
+>>	expr >> expr	Right-shift	Shr
+<<=	var <<= expr	Left-shift and assignment	ShlAssign
+>>=	var >>= expr	Right-shift and assignment	ShrAssign
+<	expr < expr	Less than comparison	PartialOrd
+<=	expr <= expr	Less than or equal to comparison	PartialOrd
+=	var = expr, ident = type	Assignment/equivalence	
+==	expr == expr	Equality comparison	PartialEq
+=>	pat => expr	Part of match arm syntax	
+>	expr > expr	Greater than comparison	PartialOrd
+>=	expr >= expr	Greater than or equal to comparison	PartialOrd
+@	ident @ pat	Pattern binding	
+|	pat | pat	Pattern alternatives	
+
+&	expr & expr	Bitwise AND	BitAnd                                             Expression,
+^	expr ^ expr	Bitwise exclusive OR	BitXor
+|	expr | expr	Bitwise OR	BitOr
+
+&=	var &= expr	Bitwise AND and assignment	BitAndAssign                       Expression,
+^=	var ^= expr	Bitwise exclusive OR and assignment	BitXorAssign
+|=	var |= expr	Bitwise OR and assignment	BitOrAssign
+
+||	expr || expr	Short-circuiting logical OR	
+?	expr?	Error propagation	    
+}
+
 
 /*
 !	ident!(...), ident!{...}, ident![...]	Macro expansion	
@@ -255,7 +493,6 @@ impl Scanner for Expression {
 ..=	..=expr, expr..=expr	Right-inclusive range literal	PartialOrd
 ..	..expr	Struct literal update syntax	
 ..	variant(x, ..), struct_type { x, .. }	“And the rest” pattern binding	
-...	expr...expr	(Deprecated, use ..= instead) In a pattern: inclusive range pattern	
 /	expr / expr	Arithmetic division	Div
 /=	var /= expr	Arithmetic division and assignment	DivAssign
 :	pat: type, ident: type	Constraints	
