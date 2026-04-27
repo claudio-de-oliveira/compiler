@@ -207,8 +207,10 @@ pub mod keywords {
 terminal!(IDENTIFIER, 53);
 
 terminal!(NUM, 54);
-terminal!(ADD, 55);
-terminal!(MUL, 56);
+terminal!(ADD, 55);  // +	expr + expr	Arithmetic addition	Add
+                     // -	expr - expr	Arithmetic subtraction	Sub
+terminal!(MUL, 56);  // *	expr * expr	Arithmetic multiplication	Mul
+                     // /	expr / expr	Arithmetic division	Div
 terminal!(LPR, 57);
 terminal!(RPR, 58);
 terminal!(END, 59);
@@ -216,8 +218,7 @@ terminal!(ERR, 60);
 
 // OPERADORES E SÍMBOLOS
 
-terminal!(NOT, 61)
-terminal!(PartialEq, 62)    
+pub enum SymbolContext {
 !	ident!(...), ident!{...}, ident![...]	Macro expansion	
 !	!expr	Bitwise or logical complement	Not
 !=	expr != expr	Nonequality comparison	PartialEq
@@ -251,6 +252,61 @@ terminal!(PartialEq, 62)
 /	expr / expr	Arithmetic division	Div
 /=	var /= expr	Arithmetic division and assignment	DivAssign
 :	pat: type, ident: type	Constraints	
+:	ident: expr	Struct field initializer	
+:	'a: loop {...}	Loop label	
+;	expr;	Statement and item terminator	
+;	[...; len]	Part of fixed-size array syntax	
+<<	expr << expr	Left-shift	Shl
+<<=	var <<= expr	Left-shift and assignment	ShlAssign
+<	expr < expr	Less than comparison	PartialOrd
+<=	expr <= expr	Less than or equal to comparison	PartialOrd
+=	var = expr, ident = type	Assignment/equivalence	
+==	expr == expr	Equality comparison	PartialEq
+=>	pat => expr	Part of match arm syntax	
+>	expr > expr	Greater than comparison	PartialOrd
+>=	expr >= expr	Greater than or equal to comparison	PartialOrd
+>>	expr >> expr	Right-shift	Shr
+>>=	var >>= expr	Right-shift and assignment	ShrAssign
+@	ident @ pat	Pattern binding	
+^	expr ^ expr	Bitwise exclusive OR	BitXor
+^=	var ^= expr	Bitwise exclusive OR and assignment	BitXorAssign
+|	pat | pat	Pattern alternatives	
+|	expr | expr	Bitwise OR	BitOr
+|=	var |= expr	Bitwise OR and assignment	BitOrAssign
+||	expr || expr	Short-circuiting logical OR	
+?	expr?	Error propagation	    
+}
+
+
+terminal!(NOT, 61); // !
+terminal!(PARTIALEQ, 62); // != ==
+terminal!(REM, 63); // %
+terminal!(REMASSIGN, 64); // %=	var %= expr	Arithmetic remainder and assignment	RemAssign
+terminal!(BORROW, 65); // &	&expr, &mut expr	Borrow	
+terminal!(BORROWEDPOINTER, 66); //  &	&type, &mut type, &'a type, &'a mut type	Borrowed pointer type	
+terminal!(BITAND, 67); // &	expr & expr	Bitwise AND	BitAnd
+terminal!(BitAndAssign, 68); // &=	var &= expr	Bitwise AND and assignment	BitAndAssign
+terminal!(AND, 69); // &&	expr && expr	Short-circuiting logical AND	
+terminal!(MUL, 56); // *	expr * expr	Arithmetic multiplication	Mul
+terminal!(MULASSIGN, 70); // *=	var *= expr	Arithmetic multiplication and assignment	MulAssign
+terminal!(DEREF, 71); // *	*expr	Dereference	Deref
+terminal!(RawPointer, 72); // *	*const type, *mut type	Raw pointer	
+terminal!(CompoundTypeConstraint, 73); // +	trait + trait, 'a + trait	Compound type constraint	
+terminal!(AddAssign, 74); // +=	var += expr	Arithmetic addition and assignment	AddAssign
+,	expr, expr	Argument and element separator	
+terminal!(NEW, 75); // -	- expr	Arithmetic negation	Neg
+terminal!(SubAssign, 76); // -=	var -= expr	Arithmetic subtraction and assignment	SubAssign
+terminal!(ReturnType, 77); // ->	fn(...) -> type, |…| -> type	Function and closure return type	
+terminal!(ACCESS, 78);  // .	expr.ident	Field access	
+                        // .	expr.ident(expr, ...)	Method call	
+                        // .	expr.0, expr.1, and so on	Tuple indexing	
+terminal!(TwoPoints, 79) // ..	.., expr.., ..expr, expr..expr	Right-exclusive range literal	PartialOrd
+                         // ..	..expr	Struct literal update syntax	
+                         // ..	variant(x, ..), struct_type { x, .. }	“And the rest” pattern binding	
+terminal!(TwoPointsEq, 80) // ..=	..=expr, expr..=expr	Right-inclusive range literal	PartialOrd
+terminal!(ThreePoints, 81) // ...	expr...expr	(Deprecated, use ..= instead) In a pattern: inclusive range pattern	
+terminal!(DivAssign, 82); // /=	var /= expr	Arithmetic division and assignment	DivAssign
+terminal!(COLON, 83); // :	pat: type, ident: type	Constraints	
 :	ident: expr	Struct field initializer	
 :	'a: loop {...}	Loop label	
 ;	expr;	Statement and item terminator	
