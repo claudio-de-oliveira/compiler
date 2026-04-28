@@ -304,80 +304,334 @@ impl Scanner for Expression {
                     }
                 }
 
-
                 100 => {
-                        {	ident!(...), ident!{...}, ident![...]	Macro expansion	
-!	!expr	Bitwise or logical complement	Not
-!=	expr != expr	Nonequality comparison	PartialEq
+                    match self.current_char() {
+                        Some('=') => {
+                            self.advance();
+                            state = 1001;
+                            continue;
+                        }
+                        _  => {
+                            // NÃO SEI COMO RESOLVER Macro Expansion
+                            return NOT; // !	!expr	Bitwise or logical complement	Not
+                        }
+                    }
+                }
+                1001 => {
+                    return NOTEQUAL; // !=	expr != expr	Nonequality comparison	PartialEq                        
+                }
+                
                 101 => {
-                        expr % expr	Arithmetic remainder	Rem
-%=	var %= expr	Arithmetic remainder and assignment	RemAssign
+                    match self.current_char() {
+                        Some('=') => {
+                            self.advance();
+                            state = 1011;
+                            continue;
+                        }
+                        _  => {
+                            return REM; // %	expr % expr	Arithmetic remainder	Rem
+                        }
+                    }
+                }
+                1011 => {
+                    return REMASSIGN; // %=	var %= expr	Arithmetic remainder and assignment	RemAssign
+                }
+                
                 102 => {
-                        &expr, &mut expr	Borrow	
-&	&type, &mut type, &'a type, &'a mut type	Borrowed pointer type	
-&	expr & expr	Bitwise AND	BitAnd
-&=	var &= expr	Bitwise AND and assignment	BitAndAssign
-&&	expr && expr	Short-circuiting logical AND	
+                    match self.current_char() {
+                        Some('=') => {
+                            self.advance();
+                            state = 1021;
+                            continue;
+                        }
+                        Some('&') => {
+                            self.advance();
+                            state = 1022;
+                            continue;
+                        }
+                        _  => {
+                            // &	&expr, &mut expr	Borrow	
+                            // &	&type, &mut type, &'a type, &'a mut type	Borrowed pointer type	
+                            return BitAnd; // &	expr & expr	Bitwise AND	BitAnd
+                        }
+                    }
+                }
+                1021 => {
+                    return BitAndAssign; // &=	var &= expr	Bitwise AND and assignment	BitAndAssign
+                }
+                1022 => {
+                    return AND; // &&	expr && expr	Short-circuiting logical AND
+                }
+                
                 103 => {
-                        expr * expr	Arithmetic multiplication	Mul
-*=	var *= expr	Arithmetic multiplication and assignment	MulAssign
-*	*expr	Dereference	Deref
-*	*const type, *mut type	Raw pointer	
+                    match self.current_char() {
+                        Some('=') => {
+                            self.advance();
+                            state = 1031;
+                            continue;
+                        }
+                        _  => {
+                            // * 	expr * expr	Arithmetic multiplication	Mul
+                            // *	*expr	Dereference	Deref
+                            // *	*const type, *mut type	Raw pointer	
+                        }
+                    }
+                }
+                1031 => {
+                    return MulAssign; // *=	var *= expr	Arithmetic multiplication and assignment	MulAssign
+                }
+                
                 104 => {
-                        trait + trait, 'a + trait	Compound type constraint	
-+	expr + expr	Arithmetic addition	Add
-+=	var += expr	Arithmetic addition and assignment	AddAssign
+                    match self.current_char() {
+                        Some('=') => {
+                            self.advance();
+                            state = 1041;
+                            continue;
+                        }
+                        _  => {
+                            // +	trait + trait, 'a + trait	Compound type constraint	
+                            // +	expr + expr	Arithmetic addition	Add
+                        }
+                    }
+                }
+                1041 => {
+                    return AddAssign; // +=	var += expr	Arithmetic addition and assignment	AddAssign
+                }
+                
                 105 => {
-                        // expr, expr	Argument and element separator	
+                    return SEPARATOR; // ,   expr, expr	Argument and element separator	
+                }
+                
                 106 => {
-                        - expr	Arithmetic negation	Neg
--	expr - expr	Arithmetic subtraction	Sub
--=	var -= expr	Arithmetic subtraction and assignment	SubAssign
-->	fn(...) -> type, |…| -> type	Function and closure return type	
+                    match self.current_char() {
+                        Some('=') => {
+                            self.advance();
+                            state = 1061;
+                            continue;
+                        }
+                        Some('>') => {
+                            self.advance();
+                            state = 1062;
+                            continue;
+                        }
+                        _  => {
+                            return MINUS; // - 	- expr	Arithmetic negation	Neg
+                                          // -	expr - expr	Arithmetic subtraction	Sub
+                        }
+                    }
+                }
+                1061 => {
+                    return SubAssign; // -=	var -= expr	Arithmetic subtraction and assignment	SubAssign
+                }
+                1062 => {
+                    return ReturnType; // ->	fn(...) -> type, |…| -> type	Function and closure return type
+                }
+                
                 107 => {
-                        expr.ident	Field access	
-.	expr.ident(expr, ...)	Method call	
-.	expr.0, expr.1, and so on	Tuple indexing	
-..	.., expr.., ..expr, expr..expr	Right-exclusive range literal	PartialOrd
-..=	..=expr, expr..=expr	Right-inclusive range literal	PartialOrd
-..	..expr	Struct literal update syntax	
-..	variant(x, ..), struct_type { x, .. }	“And the rest” pattern binding	
+                    match self.current_char() {
+                        Some('.') => {
+                            self.advance();
+                            state = 1071;
+                            continue;
+                        }
+                        _  => {
+                            // .	expr.ident	Field access	
+                            // .	expr.ident(expr, ...)	Method call	
+                            // .	expr.0, expr.1, and so on	Tuple indexing	
+                        }
+                    }
+                }
+                1071 => {
+                        Some('=') => {
+                            self.advance();
+                            state = 10711;
+                            continue;
+                        }
+                        _  => {
+                            // ..	.., expr.., ..expr, expr..expr	Right-exclusive range literal	PartialOrd
+                            // ..	..expr	Struct literal update syntax	
+                            // ..	variant(x, ..), struct_type { x, .. }	“And the rest” pattern binding	
+                        }
+                }
+                10711 => {
+                    return RightInclusiveRange; // ..=	..=expr, expr..=expr	Right-inclusive range literal	PartialOrd
+                }
+                
                 108 => {
-                        expr / expr	Arithmetic division	Div
-/=	var /= expr	Arithmetic division and assignment	DivAssign
+                    match self.current_char() {
+                        Some('=') => {
+                            self.advance();
+                            state = 1081;
+                            continue;
+                        }
+                        _  => {
+                            return DIV; // /	expr / expr	Arithmetic division	Div
+                        }
+                    }
+                }
+                1081 => {
+                    return DivAssign; // /=	var /= expr	Arithmetic division and assignment	DivAssign
+                }
+
                 109 => {
-                        pat: type, ident: type	Constraints	
-:	ident: expr	Struct field initializer	
-:	'a: loop {...}	Loop label	
+                    match self.current_char() {
+                        _  => {
+                            // :	pat: type, ident: type	Constraints	
+                            // :	ident: expr	Struct field initializer	
+                            // :	'a: loop {...}	Loop label	
+                        }
+                    }
+                }
+
                 110 => {
-                        expr;	Statement and item terminator	
-;	[...; len]	Part of fixed-size array syntax	
+                    // ;	expr;	Statement and item terminator	
+                    // ;	[...; len]	Part of fixed-size array syntax	
+                }
+
                 111 => {
-                        <	expr << expr	Left-shift	Shl
-<<=	var <<= expr	Left-shift and assignment	ShlAssign
-<	expr < expr	Less than comparison	PartialOrd
-<=	expr <= expr	Less than or equal to comparison	PartialOrd
+                    match self.current_char() {
+                        Some('=') => {
+                            self.advance();
+                            state = 1111;
+                            continue;
+                        }
+                        Some('<') => {
+                            self.advance();
+                            state = 1112;
+                            continue;
+                        }
+                        _  => {
+                            return LESSTHAN; // <	expr < expr	Less than comparison	PartialOrd
+                        }
+                    }
+                }
+                1111 => {
+                    return LESSTHANOREQUALTO;     // <=	expr <= expr	Less than or equal to comparison	PartialOrd
+                }
+                1112 => {
+                    match self.current_char() {
+                        Some('=') => {
+                            self.advance();
+                            state = 11121;
+                            continue;
+                        }
+                        _  => {
+                            return Shl; // <<	<	expr << expr	Left-shift	Shl
+                        }
+                    }
+                }
+                11121 => {
+                    return ShlAssign; // <<=	var <<= expr	Left-shift and assignment	ShlAssign
+                }
+
                 112 => {
-                        var = expr, ident = type	Assignment/equivalence	
-==	expr == expr	Equality comparison	PartialEq
-=>	pat => expr	Part of match arm syntax	
+                    match self.current_char() {
+                        Some('=') => {
+                            self.advance();
+                            state = 11211;
+                            continue;
+                        }
+                        Some('>') => {
+                            self.advance();
+                            state = 11212;
+                            continue;
+                        }
+                        _  => {
+                            // =	var = expr, ident = type	Assignment/equivalence	
+                        }
+                    }
+                }
+                11211 => {
+                    return Equality; // ==	expr == expr	Equality comparison	PartialEq
+                }
+                11212 => {
+                    return MatchArm; // =>	pat => expr	Part of match arm syntax
+                }
+
                 113 => {
-                        expr > expr	Greater than comparison	PartialOrd
->=	expr >= expr	Greater than or equal to comparison	PartialOrd
->>	expr >> expr	Right-shift	Shr
->>=	var >>= expr	Right-shift and assignment	ShrAssign
+                    match self.current_char() {
+                        Some('=') => {
+                            self.advance();
+                            state = 1131;
+                            continue;
+                        }
+                        Some('>') => {
+                            self.advance();
+                            state = 1132;
+                            continue;
+                        }
+                        _  => {
+                            return GreaterThan; // >	expr > expr	Greater than comparison	PartialOrd
+                        }
+                    }
+                }
+                1131 => {
+                    return GreaterThanOrEqualTo;  // >=	expr >= expr	Greater than or equal to comparison	PartialOrd
+                }
+                1132 => {
+                    match self.current_char() {
+                        Some('=') => {
+                            self.advance();
+                            state = 11311;
+                            continue;
+                        }
+                        _  => {
+                            return SHR; // >>	expr >> expr	Right-shift	Shr
+                        }
+                    }
+                }
+                11311 => {
+                    return ShrAssign; // >>=	var >>= expr	Right-shift and assignment	ShrAssign
+                }
+
                 114 => {
-                        ident @ pat	Pattern binding	
+                    // @	ident @ pat	Pattern binding	
+                }
+
                 115 => {
-                        expr ^ expr	Bitwise exclusive OR	BitXor
-^=	var ^= expr	Bitwise exclusive OR and assignment	BitXorAssign
+                    match self.current_char() {
+                        Some('=') => {
+                            self.advance();
+                            state = 1151;
+                            continue;
+                        }
+                        _  => {
+                            return BitXor; // ^	expr ^ expr	Bitwise exclusive OR	BitXor
+                        }
+                    }
+                }
+                1151 => {
+                    return BitXorAssign; // ^=	var ^= expr	Bitwise exclusive OR and assignment	BitXorAssign
+                }
+
                 116 => {
-                        pat | pat	Pattern alternatives	
-|	expr | expr	Bitwise OR	BitOr
-|=	var |= expr	Bitwise OR and assignment	BitOrAssign
-||	expr || expr	Short-circuiting logical OR	
+                    match self.current_char() {
+                        Some('=') => {
+                            self.advance();
+                            state = 1161;
+                            continue;
+                        }
+                        Some('|') => {
+                            self.advance();
+                            state = 1162;
+                            continue;
+                        }
+                        _  => {
+                            // |	pat | pat	Pattern alternatives	
+                            // |	expr | expr	Bitwise OR	BitOr
+                        }
+                    }
+                }
+                1161 => {
+                    return BitOrAssign; // |=	var |= expr	Bitwise OR and assignment	BitOrAssign
+                }
+                1162 => {
+                    return OR; // ||	expr || expr	Short-circuiting logical OR	
+                }
+
                 117 => {
-                        expr?	Error propagation
+                    return ErrorPropagation; //    expr?	Error propagation
+                }
 
                      
                 
