@@ -20,13 +20,48 @@ pub enum MulOp {
 pub enum Token {
     Keyword(Tag, String),
     Identifier(Tag, String),
-    Number(Tag, i32),
+    Number(Tag, String),
     AddOperator(Tag, AddOp),
     MulOperator(Tag, MulOp),
     LPar(Tag),
     RPar(Tag),
     EndMark(Tag),
     Error(Tag, String),
+    DefaultPattern(Tag),
+    Not(Tag),                    // !	!expr	Bitwise or logical complement	Not
+    Equality(Tag, EqualityOp),   // !=	expr != expr	Nonequality comparison	PartialEq                        
+    RemainderOp(Tag),            // %	expr % expr	Arithmetic remainder	Rem
+    OpAndAssignment(Tag, Op),    // %=	var %= expr	Arithmetic remainder and assignment	RemAssign
+                                 // &=	var &= expr	Bitwise AND and assignment	BitAndAssign
+                                 // *=	var *= expr	Arithmetic multiplication and assignment	MulAssign
+                                 // +=	var += expr	Arithmetic addition and assignment	AddAssign
+                                 // -=	var -= expr	Arithmetic subtraction and assignment	SubAssign
+    
+                            // &	&expr, &mut expr	Borrow	
+                            // &	&type, &mut type, &'a type, &'a mut type	Borrowed pointer type	
+                    return AMPERSAND; // &=	var &= expr	Bitwise AND and assignment	BitAndAssign
+                    return AND; // &&	expr && expr	Short-circuiting logical AND
+                            // * 	expr * expr	Arithmetic multiplication	Mul
+                            // *	*expr	Dereference	Deref
+                            // *	*const type, *mut type	Raw pointer	
+                            return STAR;
+                            // +	trait + trait, 'a + trait	Compound type constraint	
+                            // +	expr + expr	Arithmetic addition	Add
+                            return PLUS;
+                    return COMMA; // ,   expr, expr	Argument and element separator	
+                            return MINUS; // - 	- expr	Arithmetic negation	Neg
+                                          // -	expr - expr	Arithmetic subtraction	Sub
+                    return ReturnType; // ->	fn(...) -> type, |…| -> type	Function and closure return type
+                            // .	expr.ident	Field access	
+                            // .	expr.ident(expr, ...)	Method call	
+                            // .	expr.0, expr.1, and so on	Tuple indexing	
+                            return PT;
+                            // ..	.., expr.., ..expr, expr..expr	Right-exclusive range literal	PartialOrd
+                            // ..	..expr	Struct literal update syntax	
+                            // ..	variant(x, ..), struct_type { x, .. }	“And the rest” pattern binding	
+                            return PTPT;
+                    return RINRANGE; // ..=	..=expr, expr..=expr	Right-inclusive range literal	PartialOrd
+    
 }
 
 pub trait Scanner {
@@ -286,7 +321,13 @@ impl Scanner for Expression {
                         Some('_') => {
                             lexema.push('_');
                             self.advance();
-                            state = 10;
+                            state = 13;
+                            continue;
+                        }
+                        Some('!') => {
+                            lexema.push('!');
+                            self.advance();
+                            state = 12;
                             continue;
                         }
                         _ => {
@@ -298,10 +339,18 @@ impl Scanner for Expression {
                 }
                 11 => {
                     self.retract();
+                    if lexema == "_" {
+                        self.retract();
+                        return Token::DefaultPattern(DEFAULT),
+                    }
                     match Tag::from_keyword(&lexema, keywords::KeywordContext::Normal) {
                         Some(tag) => return Token::Keyword(tag, lexema),
                         _ => return Token::Identifier(IDENTIFIER, lexema),
                     }
+                }
+                12 => {
+                    // Macro
+                    return Token::Identifier(IDENTIFIER, lexema),
                 }
 
                 100 => {
@@ -312,13 +361,12 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            // NÃO SEI COMO RESOLVER Macro Expansion
                             return NOT; // !	!expr	Bitwise or logical complement	Not
                         }
                     }
                 }
                 1001 => {
-                    return NOTEQUAL; // !=	expr != expr	Nonequality comparison	PartialEq                        
+                    return NEQ; // !=	expr != expr	Nonequality comparison	PartialEq                        
                 }
                 
                 101 => {
@@ -352,12 +400,12 @@ impl Scanner for Expression {
                         _  => {
                             // &	&expr, &mut expr	Borrow	
                             // &	&type, &mut type, &'a type, &'a mut type	Borrowed pointer type	
-                            return BitAnd; // &	expr & expr	Bitwise AND	BitAnd
+                            return AMPERSAND; // &	expr & expr	Bitwise AND	BitAnd
                         }
                     }
                 }
                 1021 => {
-                    return BitAndAssign; // &=	var &= expr	Bitwise AND and assignment	BitAndAssign
+                    return BITANDASSIGN; // &=	var &= expr	Bitwise AND and assignment	BitAndAssign
                 }
                 1022 => {
                     return AND; // &&	expr && expr	Short-circuiting logical AND
@@ -374,6 +422,7 @@ impl Scanner for Expression {
                             // * 	expr * expr	Arithmetic multiplication	Mul
                             // *	*expr	Dereference	Deref
                             // *	*const type, *mut type	Raw pointer	
+                            return STAR;
                         }
                     }
                 }
@@ -391,15 +440,16 @@ impl Scanner for Expression {
                         _  => {
                             // +	trait + trait, 'a + trait	Compound type constraint	
                             // +	expr + expr	Arithmetic addition	Add
+                            return PLUS;
                         }
                     }
                 }
                 1041 => {
-                    return AddAssign; // +=	var += expr	Arithmetic addition and assignment	AddAssign
+                    return ADDASSIGN; // +=	var += expr	Arithmetic addition and assignment	AddAssign
                 }
                 
                 105 => {
-                    return SEPARATOR; // ,   expr, expr	Argument and element separator	
+                    return COMMA; // ,   expr, expr	Argument and element separator	
                 }
                 
                 106 => {
@@ -421,7 +471,7 @@ impl Scanner for Expression {
                     }
                 }
                 1061 => {
-                    return SubAssign; // -=	var -= expr	Arithmetic subtraction and assignment	SubAssign
+                    return SUBASSIGN; // -=	var -= expr	Arithmetic subtraction and assignment	SubAssign
                 }
                 1062 => {
                     return ReturnType; // ->	fn(...) -> type, |…| -> type	Function and closure return type
@@ -438,6 +488,7 @@ impl Scanner for Expression {
                             // .	expr.ident	Field access	
                             // .	expr.ident(expr, ...)	Method call	
                             // .	expr.0, expr.1, and so on	Tuple indexing	
+                            return PT;
                         }
                     }
                 }
@@ -451,10 +502,11 @@ impl Scanner for Expression {
                             // ..	.., expr.., ..expr, expr..expr	Right-exclusive range literal	PartialOrd
                             // ..	..expr	Struct literal update syntax	
                             // ..	variant(x, ..), struct_type { x, .. }	“And the rest” pattern binding	
+                            return PTPT;
                         }
                 }
                 10711 => {
-                    return RightInclusiveRange; // ..=	..=expr, expr..=expr	Right-inclusive range literal	PartialOrd
+                    return RINRANGE; // ..=	..=expr, expr..=expr	Right-inclusive range literal	PartialOrd
                 }
                 
                 108 => {
@@ -470,7 +522,7 @@ impl Scanner for Expression {
                     }
                 }
                 1081 => {
-                    return DivAssign; // /=	var /= expr	Arithmetic division and assignment	DivAssign
+                    return DIVASSIGN; // /=	var /= expr	Arithmetic division and assignment	DivAssign
                 }
 
                 109 => {
@@ -478,7 +530,8 @@ impl Scanner for Expression {
                         _  => {
                             // :	pat: type, ident: type	Constraints	
                             // :	ident: expr	Struct field initializer	
-                            // :	'a: loop {...}	Loop label	
+                            // :	'a: loop {...}	Loop label
+                            return COLON;
                         }
                     }
                 }
@@ -486,6 +539,7 @@ impl Scanner for Expression {
                 110 => {
                     // ;	expr;	Statement and item terminator	
                     // ;	[...; len]	Part of fixed-size array syntax	
+                    return SEMICOLON;
                 }
 
                 111 => {
@@ -501,12 +555,12 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            return LESSTHAN; // <	expr < expr	Less than comparison	PartialOrd
+                            return LT; // <	expr < expr	Less than comparison	PartialOrd
                         }
                     }
                 }
                 1111 => {
-                    return LESSTHANOREQUALTO;     // <=	expr <= expr	Less than or equal to comparison	PartialOrd
+                    return LTE;     // <=	expr <= expr	Less than or equal to comparison	PartialOrd
                 }
                 1112 => {
                     match self.current_char() {
@@ -516,12 +570,12 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            return Shl; // <<	<	expr << expr	Left-shift	Shl
+                            return SHL; // <<	<	expr << expr	Left-shift	Shl
                         }
                     }
                 }
                 11121 => {
-                    return ShlAssign; // <<=	var <<= expr	Left-shift and assignment	ShlAssign
+                    return SHLASSIGN; // <<=	var <<= expr	Left-shift and assignment	ShlAssign
                 }
 
                 112 => {
@@ -538,11 +592,12 @@ impl Scanner for Expression {
                         }
                         _  => {
                             // =	var = expr, ident = type	Assignment/equivalence	
+                            return EQUAL;
                         }
                     }
                 }
                 11211 => {
-                    return Equality; // ==	expr == expr	Equality comparison	PartialEq
+                    return EQ; // ==	expr == expr	Equality comparison	PartialEq
                 }
                 11212 => {
                     return MatchArm; // =>	pat => expr	Part of match arm syntax
@@ -561,12 +616,12 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            return GreaterThan; // >	expr > expr	Greater than comparison	PartialOrd
+                            return GT; // >	expr > expr	Greater than comparison	PartialOrd
                         }
                     }
                 }
                 1131 => {
-                    return GreaterThanOrEqualTo;  // >=	expr >= expr	Greater than or equal to comparison	PartialOrd
+                    return GTE;  // >=	expr >= expr	Greater than or equal to comparison	PartialOrd
                 }
                 1132 => {
                     match self.current_char() {
@@ -581,7 +636,7 @@ impl Scanner for Expression {
                     }
                 }
                 11311 => {
-                    return ShrAssign; // >>=	var >>= expr	Right-shift and assignment	ShrAssign
+                    return SHRASSIGN; // >>=	var >>= expr	Right-shift and assignment	ShrAssign
                 }
 
                 114 => {
@@ -596,12 +651,12 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            return BitXor; // ^	expr ^ expr	Bitwise exclusive OR	BitXor
+                            return BITXOR; // ^	expr ^ expr	Bitwise exclusive OR	BitXor
                         }
                     }
                 }
                 1151 => {
-                    return BitXorAssign; // ^=	var ^= expr	Bitwise exclusive OR and assignment	BitXorAssign
+                    return BITXORASSIGN; // ^=	var ^= expr	Bitwise exclusive OR and assignment	BitXorAssign
                 }
 
                 116 => {
@@ -619,11 +674,12 @@ impl Scanner for Expression {
                         _  => {
                             // |	pat | pat	Pattern alternatives	
                             // |	expr | expr	Bitwise OR	BitOr
+                            return VBAR;
                         }
                     }
                 }
                 1161 => {
-                    return BitOrAssign; // |=	var |= expr	Bitwise OR and assignment	BitOrAssign
+                    return BITORASSIGN; // |=	var |= expr	Bitwise OR and assignment	BitOrAssign
                 }
                 1162 => {
                     return OR; // ||	expr || expr	Short-circuiting logical OR	
@@ -632,7 +688,6 @@ impl Scanner for Expression {
                 117 => {
                     return ErrorPropagation; //    expr?	Error propagation
                 }
-
                      
                 
                 999 => {
