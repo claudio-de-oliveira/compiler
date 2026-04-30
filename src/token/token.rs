@@ -16,52 +16,73 @@ pub enum MulOp {
     Divide,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum EqualityOp {
+    Equal,
+    NotEqual,
+}
+
+pub enum AssignOp {
+    RemAssign,
+    BitAndAssign,
+    MulAssign,
+    AddAssign,
+    SubAssign,
+    DivAssign,
+}
+
+pub enum ComparisonOp {
+    LessThen,
+    GreatherThan, 
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Keyword(Tag, String),
     Identifier(Tag, String),
     Number(Tag, String),
-    AddOperator(Tag, AddOp),
-    MulOperator(Tag, MulOp),
     LPar(Tag),
     RPar(Tag),
     EndMark(Tag),
     Error(Tag, String),
     DefaultPattern(Tag),
+    Division(Tag),               // /	expr / expr	Arithmetic division	Div
     Not(Tag),                    // !	!expr	Bitwise or logical complement	Not
-    Equality(Tag, EqualityOp),   // !=	expr != expr	Nonequality comparison	PartialEq                        
-    RemainderOp(Tag),            // %	expr % expr	Arithmetic remainder	Rem
-    OpAndAssignment(Tag, Op),    // %=	var %= expr	Arithmetic remainder and assignment	RemAssign
+    Equality(Tag, EqualityOp),   // !=	expr != expr	Nonequality comparison	PartialEq
+                                 // ==	expr == expr	Equality comparison	PartialEq
+    Remainder(Tag),              // %	expr % expr	Arithmetic remainder	Rem
+    Assignment(Tag),             // =	var = expr, ident = type	Assignment/equivalence	
+    OpAssignment(Tag, AssignOp), // %=	var %= expr	Arithmetic remainder and assignment	RemAssign
                                  // &=	var &= expr	Bitwise AND and assignment	BitAndAssign
                                  // *=	var *= expr	Arithmetic multiplication and assignment	MulAssign
+                                 // /=	var /= expr	Arithmetic divisionn and assignment	DivAssign
                                  // +=	var += expr	Arithmetic addition and assignment	AddAssign
                                  // -=	var -= expr	Arithmetic subtraction and assignment	SubAssign
-    
-                            // &	&expr, &mut expr	Borrow	
-                            // &	&type, &mut type, &'a type, &'a mut type	Borrowed pointer type	
-                    return AMPERSAND; // &=	var &= expr	Bitwise AND and assignment	BitAndAssign
-                    return AND; // &&	expr && expr	Short-circuiting logical AND
-                            // * 	expr * expr	Arithmetic multiplication	Mul
-                            // *	*expr	Dereference	Deref
-                            // *	*const type, *mut type	Raw pointer	
-                            return STAR;
-                            // +	trait + trait, 'a + trait	Compound type constraint	
-                            // +	expr + expr	Arithmetic addition	Add
-                            return PLUS;
-                    return COMMA; // ,   expr, expr	Argument and element separator	
-                            return MINUS; // - 	- expr	Arithmetic negation	Neg
-                                          // -	expr - expr	Arithmetic subtraction	Sub
-                    return ReturnType; // ->	fn(...) -> type, |…| -> type	Function and closure return type
-                            // .	expr.ident	Field access	
-                            // .	expr.ident(expr, ...)	Method call	
-                            // .	expr.0, expr.1, and so on	Tuple indexing	
-                            return PT;
-                            // ..	.., expr.., ..expr, expr..expr	Right-exclusive range literal	PartialOrd
-                            // ..	..expr	Struct literal update syntax	
-                            // ..	variant(x, ..), struct_type { x, .. }	“And the rest” pattern binding	
-                            return PTPT;
-                    return RINRANGE; // ..=	..=expr, expr..=expr	Right-inclusive range literal	PartialOrd
-    
+    LogicalAnd(Tag),             // &&	expr && expr	Short-circuiting logical AND
+    StarSymbol(Tag),             // * 	expr * expr	Arithmetic multiplication	Mul
+                                 // *	*expr	Dereference	Deref
+                                 // *	*const type, *mut type	Raw pointer	
+    PlusSymbol(Tag),             // +	trait + trait, 'a + trait	Compound type constraint	
+                                 // +	expr + expr	Arithmetic addition	Add
+    CommaSymbol(Tag),            // ,   expr, expr	Argument and element separator	
+    MinusSymbol(Tag),            // - 	- expr	Arithmetic negation	Neg
+                                 // -	expr - expr	Arithmetic subtraction	Sub
+    ReturnType(Tag),             // ->	fn(...) -> type, |…| -> type	Function and closure return type
+    SglPtSymbol(Tag),            // .	expr.ident	Field access	
+                                 // .	expr.ident(expr, ...)	Method call	
+                                 // .	expr.0, expr.1, and so on	Tuple indexing	
+    DblPtSymbol(Tag),            // ..	.., expr.., ..expr, expr..expr	Right-exclusive range literal	PartialOrd
+                                 // ..	..expr	Struct literal update syntax	
+                                 // ..	variant(x, ..), struct_type { x, .. }	“And the rest” pattern binding	
+    InclusiveRange(Tag),         // ..=	..=expr, expr..=expr	Right-inclusive range literal	PartialOrd
+    AmpersandSymbol(Tag),        // &	&expr, &mut expr	Borrow	
+                                 // &	&type, &mut type, &'a type, &'a mut type	Borrowed pointer type	
+                                 // &	expr & expr	Bitwise AND	BitAnd
+    SemicolonSymbol(Tag),        // ;	expr;	Statement and item terminator	
+                                 // ;	[...; len]	Part of fixed-size array syntax	
+    EqualSymbol(Tag),            // =	var = expr, ident = type	Assignment/equivalence	
+    ColonSymbol(Tag),            // :
+
 }
 
 pub trait Scanner {
@@ -133,26 +154,6 @@ impl Scanner for Expression {
                             lexema.push(c);
                             self.advance();
                             state = 1;
-                            continue;
-                        }
-                        Some('+') => {
-                            self.advance();
-                            state = 3;
-                            continue;
-                        }
-                        Some('-') => {
-                            self.advance();
-                            state = 4;
-                            continue;
-                        }
-                        Some('*') => {
-                            self.advance();
-                            state = 5;
-                            continue;
-                        }
-                        Some('/') => {
-                            self.advance();
-                            state = 6;
                             continue;
                         }
                         Some('(') => {
@@ -289,18 +290,6 @@ impl Scanner for Expression {
                     let value = lexema.parse::<i32>().unwrap();
                     return Token::Number(NUM, value);
                 }
-                3 => {
-                    return Token::AddOperator(ADD, AddOp::Plus);
-                }
-                4 => {
-                    return Token::AddOperator(ADD, AddOp::Minus);
-                }
-                5 => {
-                    return Token::MulOperator(MUL, MulOp::Times);
-                }
-                6 => {
-                    return Token::MulOperator(MUL, MulOp::Divide);
-                }
                 7 => {
                     return Token::LPar(LPR);
                 }
@@ -361,12 +350,12 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            return NOT; // !	!expr	Bitwise or logical complement	Not
+                            return Symbol::Not(NOT);
                         }
                     }
                 }
                 1001 => {
-                    return NEQ; // !=	expr != expr	Nonequality comparison	PartialEq                        
+                    return Token::Equality(EQUALITY, EqualityOp::NotEqual);
                 }
                 
                 101 => {
@@ -377,12 +366,12 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            return REM; // %	expr % expr	Arithmetic remainder	Rem
+                            return Token::Remainder(REM);
                         }
                     }
                 }
                 1011 => {
-                    return REMASSIGN; // %=	var %= expr	Arithmetic remainder and assignment	RemAssign
+                    return Token::OpAssignment(OPASSIGN, AssignOp::RemAssign);
                 }
                 
                 102 => {
@@ -398,17 +387,15 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            // &	&expr, &mut expr	Borrow	
-                            // &	&type, &mut type, &'a type, &'a mut type	Borrowed pointer type	
-                            return AMPERSAND; // &	expr & expr	Bitwise AND	BitAnd
+                            return Token::AmpersandSymbol(AMPERSAND); 
                         }
                     }
                 }
                 1021 => {
-                    return BITANDASSIGN; // &=	var &= expr	Bitwise AND and assignment	BitAndAssign
+                    return Token::OpAssignment(OPASSIGN, AssignOp::BitAndAssign);
                 }
                 1022 => {
-                    return AND; // &&	expr && expr	Short-circuiting logical AND
+                    return Token::LogicalAnd(AND);
                 }
                 
                 103 => {
@@ -419,15 +406,12 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            // * 	expr * expr	Arithmetic multiplication	Mul
-                            // *	*expr	Dereference	Deref
-                            // *	*const type, *mut type	Raw pointer	
-                            return STAR;
+                            return Token::StarSymbol(STAR);
                         }
                     }
                 }
                 1031 => {
-                    return MulAssign; // *=	var *= expr	Arithmetic multiplication and assignment	MulAssign
+                    return Token::OpAssignment(OPASSIGN, AssignOp::MulAssign);
                 }
                 
                 104 => {
@@ -438,18 +422,16 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            // +	trait + trait, 'a + trait	Compound type constraint	
-                            // +	expr + expr	Arithmetic addition	Add
-                            return PLUS;
+                            return Token::PlusSymbol(PLUS);
                         }
                     }
                 }
                 1041 => {
-                    return ADDASSIGN; // +=	var += expr	Arithmetic addition and assignment	AddAssign
+                    return Token::OpAssignment(OPASSIGN, AssignOp::AddAssign);
                 }
                 
                 105 => {
-                    return COMMA; // ,   expr, expr	Argument and element separator	
+                    return Token::CommaSymbol(COMMA);
                 }
                 
                 106 => {
@@ -465,16 +447,15 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            return MINUS; // - 	- expr	Arithmetic negation	Neg
-                                          // -	expr - expr	Arithmetic subtraction	Sub
+                            return Token::MinusSymbol(MINUS);
                         }
                     }
                 }
                 1061 => {
-                    return SUBASSIGN; // -=	var -= expr	Arithmetic subtraction and assignment	SubAssign
+                    return Token::OpAssignment(OPASSIGN, AssignOp::SubAssign);
                 }
                 1062 => {
-                    return ReturnType; // ->	fn(...) -> type, |…| -> type	Function and closure return type
+                    return Token::ReturnType(ARROW);
                 }
                 
                 107 => {
@@ -485,10 +466,7 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            // .	expr.ident	Field access	
-                            // .	expr.ident(expr, ...)	Method call	
-                            // .	expr.0, expr.1, and so on	Tuple indexing	
-                            return PT;
+                            return Token::SinglePtSymbol(SGLPT);
                         }
                     }
                 }
@@ -499,14 +477,11 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            // ..	.., expr.., ..expr, expr..expr	Right-exclusive range literal	PartialOrd
-                            // ..	..expr	Struct literal update syntax	
-                            // ..	variant(x, ..), struct_type { x, .. }	“And the rest” pattern binding	
-                            return PTPT;
+                            return Token::DblPtSymbol(DBLPT);
                         }
                 }
                 10711 => {
-                    return RINRANGE; // ..=	..=expr, expr..=expr	Right-inclusive range literal	PartialOrd
+                    return Token::InclusiveRange(INRANGE);
                 }
                 
                 108 => {
@@ -517,29 +492,24 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            return DIV; // /	expr / expr	Arithmetic division	Div
+                            return Token::Division(DIV);
                         }
                     }
                 }
                 1081 => {
-                    return DIVASSIGN; // /=	var /= expr	Arithmetic division and assignment	DivAssign
+                    return Token::OpAssignment(AssignOp::DivAssign);
                 }
 
                 109 => {
                     match self.current_char() {
                         _  => {
-                            // :	pat: type, ident: type	Constraints	
-                            // :	ident: expr	Struct field initializer	
-                            // :	'a: loop {...}	Loop label
-                            return COLON;
+                            return Token::ColonSymbol(COLON);
                         }
                     }
                 }
 
                 110 => {
-                    // ;	expr;	Statement and item terminator	
-                    // ;	[...; len]	Part of fixed-size array syntax	
-                    return SEMICOLON;
+                    return Token::SemicolonSymbol(SEMICOLON);
                 }
 
                 111 => {
@@ -591,13 +561,12 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            // =	var = expr, ident = type	Assignment/equivalence	
-                            return EQUAL;
+                            return Token::EqualSymbol(EQUAL);
                         }
                     }
                 }
                 11211 => {
-                    return EQ; // ==	expr == expr	Equality comparison	PartialEq
+                    return Token::Equality(EQUALITY, EqualityOp::Equal);
                 }
                 11212 => {
                     return MatchArm; // =>	pat => expr	Part of match arm syntax
