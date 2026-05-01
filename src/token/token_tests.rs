@@ -1,9 +1,8 @@
 #[cfg(test)]
 mod tests {
-    use crate::tags::{rust_tags::Tag};    use crate::token::{Rust, Scanner};
-    use crate::token::token::{
-        AssignOp, Token,
-    };
+    use crate::tags::{rust_tags::Tag};
+    use crate::token::{Rust, Scanner};
+    use crate::token::token::{AssignOp, Token};
 
     #[test]
     fn test_simple_symbols_token() {

@@ -361,9 +361,11 @@ impl Scanner for Rust {
                 }
                 11 => {
                     self.retract();
+
                     if lexema == "_" {
                         return Token::DefaultPattern(Tag::DEFAULT);
                     }
+
                     return match Tag::from_keyword(&lexema, keywords::KeywordContext::Normal) {
                         Some(tag) => Token::Keyword(tag, lexema),
                         _ => match Tag::from_keyword(&lexema, keywords::KeywordContext::Future) {
@@ -643,16 +645,15 @@ impl Scanner for Rust {
                             continue;
                         }
                         _  => {
-                            return Token::ShiftOp(Tag::SHIFTOP, ShiftDir::Right); // >>	expr >> expr	Right-shift	Shr
+                            return Token::ShiftOp(Tag::SHIFTOP, ShiftDir::Right);
                         }
                     }
                 }
                 11311 => {
-                    return Token::OpAssignment(Tag::OPASSIGN, AssignOp::ShrAssign); // >>=	var >>= expr	Right-shift and assignment	ShrAssign
+                    return Token::OpAssignment(Tag::OPASSIGN, AssignOp::ShrAssign);
                 }
 
                 114 => {
-                    // @	ident @ pat	Pattern binding
                     return Token::AtSymbol(Tag::AT);
                 }
 
