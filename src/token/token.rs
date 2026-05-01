@@ -1,13 +1,17 @@
 #![allow(dead_code)]
 
-use crate::tags::{Tag, IDENTIFIER};
-use crate::tags::{NUM, ADD, MUL, LPR, RPR, END, ERR};
-use crate::tags::keywords;
+use crate::tags::{rust_tags, rust_tags::Tag, rust_tags::keywords};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum AddOp {
     Plus,
     Minus,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ShiftDir {
+    Left,
+    Right,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -22,18 +26,26 @@ pub enum EqualityOp {
     NotEqual,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum AssignOp {
-    RemAssign,
-    BitAndAssign,
-    MulAssign,
     AddAssign,
-    SubAssign,
+    BitAndAssign,
+    BitXorAssign,
+    BitOrAssign,
     DivAssign,
+    MulAssign,
+    RemAssign,
+    SubAssign,
+    ShrAssign,
+    ShlAssign,
 }
 
-pub enum ComparisonOp {
-    LessThen,
-    GreatherThan, 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum OrderOp {
+    LT,
+    GT,
+    LTE,
+    GTE,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -51,72 +63,94 @@ pub enum Token {
     Equality(Tag, EqualityOp),   // !=	expr != expr	Nonequality comparison	PartialEq
                                  // ==	expr == expr	Equality comparison	PartialEq
     Remainder(Tag),              // %	expr % expr	Arithmetic remainder	Rem
-    Assignment(Tag),             // =	var = expr, ident = type	Assignment/equivalence	
+    Assignment(Tag),             // =	var = expr, ident = type	Assignment/equivalence
     OpAssignment(Tag, AssignOp), // %=	var %= expr	Arithmetic remainder and assignment	RemAssign
                                  // &=	var &= expr	Bitwise AND and assignment	BitAndAssign
                                  // *=	var *= expr	Arithmetic multiplication and assignment	MulAssign
                                  // /=	var /= expr	Arithmetic divisionn and assignment	DivAssign
                                  // +=	var += expr	Arithmetic addition and assignment	AddAssign
                                  // -=	var -= expr	Arithmetic subtraction and assignment	SubAssign
+                                 // <<=	var <<= expr	Left-shift and assignment	ShlAssign
+                                 // >>=	var >>= expr	Right-shift and assignment	ShrAssign
     LogicalAnd(Tag),             // &&	expr && expr	Short-circuiting logical AND
+    LogicalOr(Tag),              // ||	expr || expr	Short-circuiting logical OR
+    BitwiseAnd(Tag),             // &	expr & expr	Bitwise AND	BitAnd
+    BitwiseOr(Tag),              // |	expr | expr	Bitwise OR	BitOr
+    BitwiseXor(Tag),             // ^	expr ^ expr	Bitwise exclusive OR	BitXor
+    BitwiseAndAssign(Tag),       // &=	expr & expr	Bitwise AND	BitAnd
+    BitwiseOrAssign(Tag),        // |=	var |= expr	Bitwise OR and assignment	BitOrAssign
+    BitwiseXorAssign(Tag),       // ^=	var ^= expr	Bitwise exclusive OR and assignment	BitXorAssign
+    InterrogationSymbol(Tag),    // ?   expr?	Error propagation
+    MatchArm(Tag),               // =>	pat => expr	Part of match arm syntax
+    ShiftOp(Tag, ShiftDir),      // <<	<	expr << expr	Left-shift	Shl
     StarSymbol(Tag),             // * 	expr * expr	Arithmetic multiplication	Mul
                                  // *	*expr	Dereference	Deref
-                                 // *	*const type, *mut type	Raw pointer	
-    PlusSymbol(Tag),             // +	trait + trait, 'a + trait	Compound type constraint	
+                                 // *	*const type, *mut type	Raw pointer
+    PlusSymbol(Tag),             // +	trait + trait, 'a + trait	Compound type constraint
                                  // +	expr + expr	Arithmetic addition	Add
-    CommaSymbol(Tag),            // ,   expr, expr	Argument and element separator	
+    CommaSymbol(Tag),            // ,   expr, expr	Argument and element separator
     MinusSymbol(Tag),            // - 	- expr	Arithmetic negation	Neg
                                  // -	expr - expr	Arithmetic subtraction	Sub
     ReturnType(Tag),             // ->	fn(...) -> type, |…| -> type	Function and closure return type
-    SglPtSymbol(Tag),            // .	expr.ident	Field access	
-                                 // .	expr.ident(expr, ...)	Method call	
-                                 // .	expr.0, expr.1, and so on	Tuple indexing	
+    SglPtSymbol(Tag),            // .	expr.ident	Field access
+                                 // .	expr.ident(expr, ...)	Method call
+                                 // .	expr.0, expr.1, and so on	Tuple indexing
     DblPtSymbol(Tag),            // ..	.., expr.., ..expr, expr..expr	Right-exclusive range literal	PartialOrd
-                                 // ..	..expr	Struct literal update syntax	
-                                 // ..	variant(x, ..), struct_type { x, .. }	“And the rest” pattern binding	
+                                 // ..	..expr	Struct literal update syntax
+                                 // ..	variant(x, ..), struct_type { x, .. }	“And the rest” pattern binding
     InclusiveRange(Tag),         // ..=	..=expr, expr..=expr	Right-inclusive range literal	PartialOrd
-    AmpersandSymbol(Tag),        // &	&expr, &mut expr	Borrow	
-                                 // &	&type, &mut type, &'a type, &'a mut type	Borrowed pointer type	
+    AmpersandSymbol(Tag),        // &	&expr, &mut expr	Borrow
+                                 // &	&type, &mut type, &'a type, &'a mut type	Borrowed pointer type
                                  // &	expr & expr	Bitwise AND	BitAnd
-    SemicolonSymbol(Tag),        // ;	expr;	Statement and item terminator	
-                                 // ;	[...; len]	Part of fixed-size array syntax	
-    EqualSymbol(Tag),            // =	var = expr, ident = type	Assignment/equivalence	
-    ColonSymbol(Tag),            // :
-
+    SemicolonSymbol(Tag),        // ;	expr;	Statement and item terminator
+                                 // ;	[...; len]	Part of fixed-size array syntax
+    EqualSymbol(Tag),            // =	var = expr, ident = type	Assignment/equivalence
+    Comparison(Tag, OrderOp),    // <	expr < expr	Less than comparison	PartialOrd
+                                 // >	expr > expr	Greater than comparison	PartialOrd
+    VerticalBarSymbol(Tag),      // |	pat | pat	Pattern alternatives
+                                 // |	expr | expr	Bitwise OR	BitOr
+    AtSymbol(Tag),               // @	ident @ pat	Pattern binding
+    ColonSymbol(Tag),            // :	pat: type, ident: type	Constraints
+                                 // :	ident: expr	Struct field initializer
+                                 // :	'a: loop {...}	Loop label
 }
 
 pub trait Scanner {
     fn next_token(&mut self) -> Token;
 }
 
-pub struct Expression {
+pub struct Rust {
     current_position: usize,
     chars: Vec<char>,
 }
 
-impl Expression {
+impl Rust {
     pub fn new(text: &str) -> Self {
-        Expression {
+        Rust {
             current_position: 0,
             chars: text.chars().collect(),
         }
     }
 
+    #[inline]
     fn current_char(&self) -> Option<char> {
         self.chars.get(self.current_position).copied()
     }
 
     /// Espia o próximo caractere sem avançar a posição
+    #[inline]
     fn peek_char(&self) -> Option<char> {
         self.chars.get(self.current_position + 1).copied()
     }
 
     /// Avança para o próximo caractere e retorna o caractere atual
+    #[inline]
     fn advance(&mut self) {
         self.current_position += 1;
     }
 
     /// Volta uma posição com segurança (não vai abaixo de 0)
+    #[inline]
     fn retract(&mut self) {
         if self.current_position > 0 {
             self.current_position -= 1;
@@ -124,7 +158,7 @@ impl Expression {
     }
 }
 
-impl Scanner for Expression {
+impl Scanner for Rust {
     fn next_token(&mut self) -> Token {
         let mut state = 0;
         let mut lexema = String::new();
@@ -287,17 +321,16 @@ impl Scanner for Expression {
                 }
                 2 => {
                     self.retract(); // RETRACT
-                    let value = lexema.parse::<i32>().unwrap();
-                    return Token::Number(NUM, value);
+                    return Token::Number(rust_tags::Tag::NUM, lexema);
                 }
                 7 => {
-                    return Token::LPar(LPR);
+                    return Token::LPar(Tag::LPAR);
                 }
                 8 => {
-                    return Token::RPar(RPR);
+                    return Token::RPar(Tag::RPAR);
                 }
                 9 => {
-                    return Token::EndMark(END);
+                    return Token::EndMark(Tag::END);
                 }
                 10 => {
                     match self.current_char() {
@@ -329,17 +362,25 @@ impl Scanner for Expression {
                 11 => {
                     self.retract();
                     if lexema == "_" {
-                        self.retract();
-                        return Token::DefaultPattern(DEFAULT),
+                        return Token::DefaultPattern(Tag::DEFAULT);
                     }
-                    match Tag::from_keyword(&lexema, keywords::KeywordContext::Normal) {
-                        Some(tag) => return Token::Keyword(tag, lexema),
-                        _ => return Token::Identifier(IDENTIFIER, lexema),
+                    return match Tag::from_keyword(&lexema, keywords::KeywordContext::Normal) {
+                        Some(tag) => Token::Keyword(tag, lexema),
+                        _ => match Tag::from_keyword(&lexema, keywords::KeywordContext::Future) {
+                                Some(tag) => Token::Keyword(tag, lexema),
+                                _ => match Tag::from_keyword(&lexema, keywords::KeywordContext::Lifetimes) {
+                                        Some(tag) => Token::Keyword(tag, lexema),
+                                        _ => match Tag::from_keyword(&lexema, keywords::KeywordContext::Union) {
+                                                Some(tag) => Token::Keyword(tag, lexema),
+                                                _ => Token::Identifier(Tag::IDENTIFIER, lexema),
+                                            },
+                                    },
+                            }
                     }
                 }
                 12 => {
                     // Macro
-                    return Token::Identifier(IDENTIFIER, lexema),
+                    return Token::Identifier(Tag::IDENTIFIER, lexema);
                 }
 
                 100 => {
@@ -350,14 +391,14 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            return Symbol::Not(NOT);
+                            return Token::Not(Tag::NOT);
                         }
                     }
                 }
                 1001 => {
-                    return Token::Equality(EQUALITY, EqualityOp::NotEqual);
+                    return Token::Equality(Tag::EQUALITY, EqualityOp::NotEqual);
                 }
-                
+
                 101 => {
                     match self.current_char() {
                         Some('=') => {
@@ -366,14 +407,14 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            return Token::Remainder(REM);
+                            return Token::Remainder(Tag::REM);
                         }
                     }
                 }
                 1011 => {
-                    return Token::OpAssignment(OPASSIGN, AssignOp::RemAssign);
+                    return Token::OpAssignment(Tag::OPASSIGN, AssignOp::RemAssign);
                 }
-                
+
                 102 => {
                     match self.current_char() {
                         Some('=') => {
@@ -387,17 +428,17 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            return Token::AmpersandSymbol(AMPERSAND); 
+                            return Token::AmpersandSymbol(Tag::AMPERSAND);
                         }
                     }
                 }
                 1021 => {
-                    return Token::OpAssignment(OPASSIGN, AssignOp::BitAndAssign);
+                    return Token::OpAssignment(Tag::OPASSIGN, AssignOp::BitAndAssign);
                 }
                 1022 => {
-                    return Token::LogicalAnd(AND);
+                    return Token::LogicalAnd(Tag::AND);
                 }
-                
+
                 103 => {
                     match self.current_char() {
                         Some('=') => {
@@ -406,14 +447,14 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            return Token::StarSymbol(STAR);
+                            return Token::StarSymbol(Tag::STAR);
                         }
                     }
                 }
                 1031 => {
-                    return Token::OpAssignment(OPASSIGN, AssignOp::MulAssign);
+                    return Token::OpAssignment(Tag::OPASSIGN, AssignOp::MulAssign);
                 }
-                
+
                 104 => {
                     match self.current_char() {
                         Some('=') => {
@@ -422,18 +463,18 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            return Token::PlusSymbol(PLUS);
+                            return Token::PlusSymbol(Tag::PLUS);
                         }
                     }
                 }
                 1041 => {
-                    return Token::OpAssignment(OPASSIGN, AssignOp::AddAssign);
+                    return Token::OpAssignment(Tag::OPASSIGN, AssignOp::AddAssign);
                 }
-                
+
                 105 => {
-                    return Token::CommaSymbol(COMMA);
+                    return Token::CommaSymbol(Tag::COMMA);
                 }
-                
+
                 106 => {
                     match self.current_char() {
                         Some('=') => {
@@ -447,17 +488,17 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            return Token::MinusSymbol(MINUS);
+                            return Token::MinusSymbol(Tag::MINUS);
                         }
                     }
                 }
                 1061 => {
-                    return Token::OpAssignment(OPASSIGN, AssignOp::SubAssign);
+                    return Token::OpAssignment(Tag::OPASSIGN, AssignOp::SubAssign);
                 }
                 1062 => {
-                    return Token::ReturnType(ARROW);
+                    return Token::ReturnType(Tag::ARROW);
                 }
-                
+
                 107 => {
                     match self.current_char() {
                         Some('.') => {
@@ -466,24 +507,26 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            return Token::SinglePtSymbol(SGLPT);
+                            return Token::SglPtSymbol(Tag::SGLPT);
                         }
                     }
                 }
                 1071 => {
+                    match self.current_char() {
                         Some('=') => {
                             self.advance();
                             state = 10711;
                             continue;
                         }
                         _  => {
-                            return Token::DblPtSymbol(DBLPT);
+                            return Token::DblPtSymbol(Tag::DBLPT);
                         }
+                    }
                 }
                 10711 => {
-                    return Token::InclusiveRange(INRANGE);
+                    return Token::InclusiveRange(Tag::INRANGE);
                 }
-                
+
                 108 => {
                     match self.current_char() {
                         Some('=') => {
@@ -492,24 +535,24 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            return Token::Division(DIV);
+                            return Token::Division(Tag::DIV);
                         }
                     }
                 }
                 1081 => {
-                    return Token::OpAssignment(AssignOp::DivAssign);
+                    return Token::OpAssignment(Tag::OPASSIGN, AssignOp::DivAssign);
                 }
 
                 109 => {
                     match self.current_char() {
                         _  => {
-                            return Token::ColonSymbol(COLON);
+                            return Token::ColonSymbol(Tag::COLON);
                         }
                     }
                 }
 
                 110 => {
-                    return Token::SemicolonSymbol(SEMICOLON);
+                    return Token::SemicolonSymbol(Tag::SEMICOLON);
                 }
 
                 111 => {
@@ -525,12 +568,12 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            return LT; // <	expr < expr	Less than comparison	PartialOrd
+                            return Token::Comparison(Tag::LT, OrderOp::LT);
                         }
                     }
                 }
                 1111 => {
-                    return LTE;     // <=	expr <= expr	Less than or equal to comparison	PartialOrd
+                    return Token::Comparison(Tag::LTE, OrderOp::LTE);
                 }
                 1112 => {
                     match self.current_char() {
@@ -540,12 +583,12 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            return SHL; // <<	<	expr << expr	Left-shift	Shl
+                            return Token::ShiftOp(Tag::SHIFTOP, ShiftDir::Left);
                         }
                     }
                 }
                 11121 => {
-                    return SHLASSIGN; // <<=	var <<= expr	Left-shift and assignment	ShlAssign
+                    return Token::OpAssignment(Tag::OPASSIGN, AssignOp::ShlAssign);
                 }
 
                 112 => {
@@ -561,15 +604,15 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            return Token::EqualSymbol(EQUAL);
+                            return Token::EqualSymbol(Tag::EQUAL);
                         }
                     }
                 }
                 11211 => {
-                    return Token::Equality(EQUALITY, EqualityOp::Equal);
+                    return Token::Equality(Tag::EQUALITY, EqualityOp::Equal);
                 }
                 11212 => {
-                    return MatchArm; // =>	pat => expr	Part of match arm syntax
+                    return Token::MatchArm(Tag::MATCHARM);
                 }
 
                 113 => {
@@ -585,12 +628,12 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            return GT; // >	expr > expr	Greater than comparison	PartialOrd
+                            return Token::Comparison(Tag::GT, OrderOp::GT);
                         }
                     }
                 }
                 1131 => {
-                    return GTE;  // >=	expr >= expr	Greater than or equal to comparison	PartialOrd
+                    return Token::Comparison(Tag::GTE, OrderOp::GTE);
                 }
                 1132 => {
                     match self.current_char() {
@@ -600,16 +643,17 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            return SHR; // >>	expr >> expr	Right-shift	Shr
+                            return Token::ShiftOp(Tag::SHIFTOP, ShiftDir::Right); // >>	expr >> expr	Right-shift	Shr
                         }
                     }
                 }
                 11311 => {
-                    return SHRASSIGN; // >>=	var >>= expr	Right-shift and assignment	ShrAssign
+                    return Token::OpAssignment(Tag::OPASSIGN, AssignOp::ShrAssign); // >>=	var >>= expr	Right-shift and assignment	ShrAssign
                 }
 
                 114 => {
-                    // @	ident @ pat	Pattern binding	
+                    // @	ident @ pat	Pattern binding
+                    return Token::AtSymbol(Tag::AT);
                 }
 
                 115 => {
@@ -620,12 +664,12 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            return BITXOR; // ^	expr ^ expr	Bitwise exclusive OR	BitXor
+                            return Token::BitwiseXor(Tag::BITXOR);
                         }
                     }
                 }
                 1151 => {
-                    return BITXORASSIGN; // ^=	var ^= expr	Bitwise exclusive OR and assignment	BitXorAssign
+                    return Token::OpAssignment(Tag::OPASSIGN, AssignOp::BitXorAssign);
                 }
 
                 116 => {
@@ -641,160 +685,30 @@ impl Scanner for Expression {
                             continue;
                         }
                         _  => {
-                            // |	pat | pat	Pattern alternatives	
-                            // |	expr | expr	Bitwise OR	BitOr
-                            return VBAR;
+                            return Token::VerticalBarSymbol(Tag::VBAR);
                         }
                     }
                 }
                 1161 => {
-                    return BITORASSIGN; // |=	var |= expr	Bitwise OR and assignment	BitOrAssign
+                    return Token::OpAssignment(Tag::OPASSIGN, AssignOp::BitOrAssign);
                 }
                 1162 => {
-                    return OR; // ||	expr || expr	Short-circuiting logical OR	
+                    return Token::LogicalOr(Tag::OR);
                 }
 
                 117 => {
-                    return ErrorPropagation; //    expr?	Error propagation
+                    return Token::InterrogationSymbol(Tag::INTERROGATION);
                 }
-                     
-                
+
                 999 => {
                     self.retract();
-                    return Token::Error(ERR, format!("Caracter inválido: {}", lexema));
+                    return Token::Error(Tag::ERR, format!("Caracter inválido: {}", lexema));
                 }
                 _ => {
-                    return Token::Error(ERR, "Caracter inválido".to_string());
+                    return Token::Error(Tag::ERR, "Caracter inválido".to_string());
                 }
             }
         }
     }
 }
 
-pub enum SymbolContext {
-    Expression,
-    Declaration,
-    CompoundTypeConstraint,
-    Pattern,
-    
-!	ident!(...), ident!{...}, ident![...]	Macro expansion
-    
-!	!expr	Bitwise or logical complement	Not                                Expression,
-!=	expr != expr	Nonequality comparison	PartialEq                          Expression,
-%	expr % expr	Arithmetic remainder	Rem                                    Expression,
-%=	var %= expr	Arithmetic remainder and assignment	RemAssign                  Expression,
-
-    &	&expr, &mut expr	Borrow	                                           Expression,
-    &	&type, &mut type, &'a type, &'a mut type	Borrowed pointer type	   Declaration,
-&&	expr && expr	Short-circuiting logical AND	                           Expression,
-*	expr * expr	Arithmetic multiplication	Mul                                Expression,
-*=	var *= expr	Arithmetic multiplication and assignment	MulAssign          Expression,
-*	*expr	Dereference	Deref                                                  Expression,
-*	*const type, *mut type	Raw pointer	                                       Declaration,
-+	trait + trait, 'a + trait	Compound type constraint	
-+	expr + expr	Arithmetic addition	Add
-+=	var += expr	Arithmetic addition and assignment	AddAssign
-,	expr, expr	Argument and element separator	
--	- expr	Arithmetic negation	Neg
--	expr - expr	Arithmetic subtraction	Sub
--=	var -= expr	Arithmetic subtraction and assignment	SubAssign
-->	fn(...) -> type, |…| -> type	Function and closure return type	
-.	expr.ident	Field access	
-.	expr.ident(expr, ...)	Method call	
-.	expr.0, expr.1, and so on	Tuple indexing	
-..	.., expr.., ..expr, expr..expr	Right-exclusive range literal	PartialOrd
-..=	..=expr, expr..=expr	Right-inclusive range literal	PartialOrd
-..	..expr	Struct literal update syntax	
-..	variant(x, ..), struct_type { x, .. }	“And the rest” pattern binding	
-...	expr...expr	(Deprecated, use ..= instead) In a pattern: inclusive range pattern	
-/	expr / expr	Arithmetic division	Div
-/=	var /= expr	Arithmetic division and assignment	DivAssign
-:	pat: type, ident: type	Constraints	
-:	ident: expr	Struct field initializer	
-:	'a: loop {...}	Loop label	
-;	expr;	Statement and item terminator	
-;	[...; len]	Part of fixed-size array syntax	
-<<	expr << expr	Left-shift	Shl
->>	expr >> expr	Right-shift	Shr
-<<=	var <<= expr	Left-shift and assignment	ShlAssign
->>=	var >>= expr	Right-shift and assignment	ShrAssign
-<	expr < expr	Less than comparison	PartialOrd
-<=	expr <= expr	Less than or equal to comparison	PartialOrd
-=	var = expr, ident = type	Assignment/equivalence	
-==	expr == expr	Equality comparison	PartialEq
-=>	pat => expr	Part of match arm syntax	
->	expr > expr	Greater than comparison	PartialOrd
->=	expr >= expr	Greater than or equal to comparison	PartialOrd
-@	ident @ pat	Pattern binding	
-|	pat | pat	Pattern alternatives	
-
-&	expr & expr	Bitwise AND	BitAnd                                             Expression,
-^	expr ^ expr	Bitwise exclusive OR	BitXor
-|	expr | expr	Bitwise OR	BitOr
-
-&=	var &= expr	Bitwise AND and assignment	BitAndAssign                       Expression,
-^=	var ^= expr	Bitwise exclusive OR and assignment	BitXorAssign
-|=	var |= expr	Bitwise OR and assignment	BitOrAssign
-
-||	expr || expr	Short-circuiting logical OR	
-?	expr?	Error propagation	    
-}
-
-
-/*
-!	ident!(...), ident!{...}, ident![...]	Macro expansion	
-!	!expr	Bitwise or logical complement	Not
-!=	expr != expr	Nonequality comparison	PartialEq
-%	expr % expr	Arithmetic remainder	Rem
-%=	var %= expr	Arithmetic remainder and assignment	RemAssign
-&	&expr, &mut expr	Borrow	
-&	&type, &mut type, &'a type, &'a mut type	Borrowed pointer type	
-&	expr & expr	Bitwise AND	BitAnd
-&=	var &= expr	Bitwise AND and assignment	BitAndAssign
-&&	expr && expr	Short-circuiting logical AND	
-*	expr * expr	Arithmetic multiplication	Mul
-*=	var *= expr	Arithmetic multiplication and assignment	MulAssign
-*	*expr	Dereference	Deref
-*	*const type, *mut type	Raw pointer	
-+	trait + trait, 'a + trait	Compound type constraint	
-+	expr + expr	Arithmetic addition	Add
-+=	var += expr	Arithmetic addition and assignment	AddAssign
-,	expr, expr	Argument and element separator	
--	- expr	Arithmetic negation	Neg
--	expr - expr	Arithmetic subtraction	Sub
--=	var -= expr	Arithmetic subtraction and assignment	SubAssign
-->	fn(...) -> type, |…| -> type	Function and closure return type	
-.	expr.ident	Field access	
-.	expr.ident(expr, ...)	Method call	
-.	expr.0, expr.1, and so on	Tuple indexing	
-..	.., expr.., ..expr, expr..expr	Right-exclusive range literal	PartialOrd
-..=	..=expr, expr..=expr	Right-inclusive range literal	PartialOrd
-..	..expr	Struct literal update syntax	
-..	variant(x, ..), struct_type { x, .. }	“And the rest” pattern binding	
-/	expr / expr	Arithmetic division	Div
-/=	var /= expr	Arithmetic division and assignment	DivAssign
-:	pat: type, ident: type	Constraints	
-:	ident: expr	Struct field initializer	
-:	'a: loop {...}	Loop label	
-;	expr;	Statement and item terminator	
-;	[...; len]	Part of fixed-size array syntax	
-<<	expr << expr	Left-shift	Shl
-<<=	var <<= expr	Left-shift and assignment	ShlAssign
-<	expr < expr	Less than comparison	PartialOrd
-<=	expr <= expr	Less than or equal to comparison	PartialOrd
-=	var = expr, ident = type	Assignment/equivalence	
-==	expr == expr	Equality comparison	PartialEq
-=>	pat => expr	Part of match arm syntax	
->	expr > expr	Greater than comparison	PartialOrd
->=	expr >= expr	Greater than or equal to comparison	PartialOrd
->>	expr >> expr	Right-shift	Shr
->>=	var >>= expr	Right-shift and assignment	ShrAssign
-@	ident @ pat	Pattern binding	
-^	expr ^ expr	Bitwise exclusive OR	BitXor
-^=	var ^= expr	Bitwise exclusive OR and assignment	BitXorAssign
-|	pat | pat	Pattern alternatives	
-|	expr | expr	Bitwise OR	BitOr
-|=	var |= expr	Bitwise OR and assignment	BitOrAssign
-||	expr || expr	Short-circuiting logical OR	
-?	expr?	Error propagation
-*/
