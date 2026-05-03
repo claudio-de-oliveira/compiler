@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use std::char;
+
 use crate::tags::{rust_tags, rust_tags::Tag, rust_tags::keywords};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -143,14 +145,18 @@ impl Rust {
     }
 
     #[inline]
-    fn current_char(&self) -> Option<char> {
-        self.text.chars().nth(self.current_position)
+    fn get_position(&self) -> usize {
+        self.current_position
     }
 
-    /// Espia o próximo caractere sem avançar a posição
     #[inline]
-    fn peek_char(&self) -> Option<char> {
-        self.text.chars().nth(self.current_position + 1)
+    fn set_position(&mut self, position: usize) {
+        self.current_position = position;
+    }
+
+    #[inline]
+    fn current_char(&self) -> Option<char> {
+        self.text.chars().nth(self.current_position)
     }
 
     /// Avança para o próximo caractere e retorna o caractere atual
@@ -737,234 +743,15 @@ impl Scanner for Rust {
                 117 => {
                     return Token::InterrogationSymbol(Tag::INTERROGATION);
                 }
-
                 150 => {
-                    match self.current_char() {
-                        Some('\\') => {
-                            self.advance();
-                            state = 1502;
-                            continue;
-                        }
-                        Some(c) => {
-                            lexema.push(c);
-                            self.advance();
-                            state = 1590;
-                            continue;
-                        }
-                        _ => {
-                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
-                        }
+                    let char = self.peek_char();
+
+                    if char == None {
+                        return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
                     }
-                }
-                1501 => {
-                    match self.current_char() {
-                        Some('\\') => {  // \\
-                            self.advance();
-                            state = 1502;
-                            continue;
-                        }
-                        Some(c) if c != '\'' => {
-                            lexema.push(c);
-                            self.advance();
-                            state = 1590;
-                            continue;
-                        }
-                        _ => {
-                            todo!();
-                        }
-                    }
-                }
-                1502 => {
-                    match self.current_char() {
-                        Some('u') => {  // \u{...}
-                            self.advance();
-                            state = 1503;
-                            continue;
-                        }
-                        Some('n') => {  // \n
-                            lexema.push('\n');
-                            self.advance();
-                            state = 1590;
-                            continue;
-                        }
-                        Some('r') => {  // \r
-                            lexema.push('\r');
-                            self.advance();
-                            state = 1590;
-                            continue;
-                        }
-                        Some('t') => {  // \t
-                            lexema.push('\t');
-                            self.advance();
-                            state = 1590;
-                            continue;
-                        }
-                        Some('\\') => {  // \\
-                            lexema.push('\\');
-                            self.advance();
-                            state = 1590;
-                            continue;
-                        }
-                        Some('\'') => {  // \'
-                            lexema.push('\'');
-                            self.advance();
-                            state = 1590;
-                            continue;
-                        }
-                        Some('\"') => {  // \"
-                            lexema.push('\"');
-                            self.advance();
-                            state = 1590;
-                            continue;
-                        }
-                        _ => {
-                            todo!();
-                        }
-                    }
-                }
-                1503 => {
-                    match self.current_char() {
-                        Some('{') => {
-                            self.advance();
-                            state = 1504;
-                            continue;
-                        }
-                        _ => {
-                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
-                        }
-                    }
-                }
-                1504 => {
-                    match self.current_char() {
-                        Some(c) if c.is_digit(16) => {  // primeiro
-                            lexema.push(c);
-                            self.advance();
-                            state = 1505;
-                            continue;
-                        }
-                        _ => {
-                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
-                        }
-                    }
-                }
-                1505 => {
-                    match self.current_char() {
-                        Some(c) if c.is_digit(16) => {  // segundo
-                            lexema.push(c);
-                            self.advance();
-                            state = 1506;
-                            continue;
-                        }
-                        Some('}') => {
-                            self.advance();
-                            state = 1511;
-                            continue;
-                        }
-                        _ => {
-                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
-                        }
-                    }
-                }
-                1506 => {
-                    match self.current_char() {
-                        Some(c) if c.is_digit(16) => {  // terceiro
-                            lexema.push(c);
-                            self.advance();
-                            state = 1507;
-                            continue;
-                        }
-                        Some('}') => {
-                            self.advance();
-                            state = 1511;
-                            continue;
-                        }
-                        _ => {
-                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
-                        }
-                    }
-                }
-                1507 => {
-                    match self.current_char() {
-                        Some(c) if c.is_digit(16) => {  // quarto
-                            lexema.push(c);
-                            self.advance();
-                            state = 1508;
-                            continue;
-                        }
-                        Some('}') => {
-                            self.advance();
-                            state = 1511;
-                            continue;
-                        }
-                        _ => {
-                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
-                        }
-                    }
-                }
-                1508 => {
-                    match self.current_char() {
-                        Some(c) if c.is_digit(16) => {  // quinto
-                            lexema.push(c);
-                            self.advance();
-                            state = 1509;
-                            continue;
-                        }
-                        Some('}') => {
-                            self.advance();
-                            state = 1511;
-                            continue;
-                        }
-                        _ => {
-                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
-                        }
-                    }
-                }
-                1509 => {
-                    match self.current_char() {
-                        Some(c) if c.is_digit(16) => {  // sexto
-                            lexema.push(c);
-                            self.advance();
-                            state = 1510;
-                            continue;
-                        }
-                        Some('}') => {
-                            self.advance();
-                            state = 1511;
-                            continue;
-                        }
-                        _ => {
-                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
-                        }
-                    }
-                }
-                1510 => {
-                    match self.current_char() {
-                        Some('}') => {
-                            self.advance();
-                            state = 1511;
-                            continue;
-                        }
-                        _ => {
-                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
-                        }
-                    }
-                }
-                1511 => {
-                    match self.current_char() {
-                        Some('\'') => {
-                            self.advance();
-                            state = 1512;
-                            continue;
-                        }
-                        _ => {
-                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
-                        }
-                    }
-                }
-                1512 => {
-                    return Token::Character(Tag::CHARACTER, std::char::from_u32(u32::from_str_radix(&lexema, 16).unwrap_or(0)).unwrap_or('\0'));
-                }
-                1590 => {
+
+                    lexema.push(char.unwrap());
+
                     match self.current_char() {
                         Some('\'') => {
                             self.advance();
@@ -976,6 +763,7 @@ impl Scanner for Rust {
                         }
                     }
                 }
+
                 1599 => {
                     return Token::Character(Tag::CHARACTER, lexema.chars().nth(0).unwrap_or('\0'));
                 }
@@ -1158,6 +946,18 @@ impl Scanner for Rust {
                         Some('\"') => {
                             self.advance();
                             state = 1680;
+                            continue;
+                        }
+                        Some('\\') if string_type == StringLiteralType::Standard || string_type == StringLiteralType::ByteString => {
+                            lexema.push('\\');
+                            self.advance();
+                            state = 1623;
+                            continue;
+                        }
+                        Some('\\') => {
+                            lexema.push('\\');
+                            self.advance();
+                            state = 1625;
                             continue;
                         }
                         Some(c) => {
@@ -1409,5 +1209,254 @@ impl Scanner for Rust {
             }
         }
     }
+
 }
 
+impl Rust {
+    fn peek_char(&mut self) -> Option<char> {
+        let mut state = 0;
+        let mut lexema = String::new();
+        let mut auxiliary = String::new();
+        let position = self.get_position();
+
+        loop {
+            match state {
+                0 => {
+                    match self.current_char() {
+                        Some('\\') => {
+                            auxiliary.push('\\');
+                            self.advance();
+                            state = 1;
+                            continue;
+                        }
+                        Some(c) => {
+                            auxiliary.push(c);
+                            lexema.push(c);
+                            self.advance();
+                            state = 12;
+                            continue;
+                        }
+                        _ => {
+                            self.set_position(position);
+                            return None;
+                        }
+                    }
+                }
+                1 => {
+                    match self.current_char() {
+                        Some('u') => {  // \u{...}
+                            auxiliary.push('u');
+                            self.advance();
+                            state = 2;
+                            continue;
+                        }
+                        Some('n') => {  // \n
+                            auxiliary.push('n');
+                            lexema.push('\n');
+                            self.advance();
+                            state = 12;
+                            continue;
+                        }
+                        Some('r') => {  // \r
+                            auxiliary.push('r');
+                            lexema.push('\r');
+                            self.advance();
+                            state = 12;
+                            continue;
+                        }
+                        Some('t') => {  // \t
+                            auxiliary.push('t');
+                            lexema.push('\t');
+                            self.advance();
+                            state = 12;
+                            continue;
+                        }
+                        Some('\\') => {  // \\
+                            auxiliary.push('\\');
+                            lexema.push('\\');
+                            self.advance();
+                            state = 12;
+                            continue;
+                        }
+                        Some('\'') => {  // \'
+                            auxiliary.push('\'');
+                            lexema.push('\'');
+                            self.advance();
+                            state = 12;
+                            continue;
+                        }
+                        Some('\"') => {  // \"
+                            auxiliary.push('\"');
+                            lexema.push('\"');
+                            self.advance();
+                            state = 12;
+                            continue;
+                        }
+                        _ => {
+                            self.set_position(position);
+                            return None;
+                        }
+                    }
+                }
+                2 => {
+                    match self.current_char() {
+                        Some('{') => {
+                            auxiliary.push('{');
+                            self.advance();
+                            state = 3;
+                            continue;
+                        }
+                        _ => {
+                            self.set_position(position);
+                            return None;
+                        }
+                    }
+                }
+                3 => {
+                    match self.current_char() {
+                        Some(c) if c.is_digit(16) => {  // primeiro
+                            auxiliary.push(c);
+                            lexema.push(c);
+                            self.advance();
+                            state = 4;
+                            continue;
+                        }
+                        _ => {
+                            self.set_position(position);
+                            return None;
+                        }
+                    }
+                }
+                4 => {
+                    match self.current_char() {
+                        Some(c) if c.is_digit(16) => {  // segundo
+                            auxiliary.push(c);
+                            lexema.push(c);
+                            self.advance();
+                            state = 5;
+                            continue;
+                        }
+                        Some('}') => {
+                            auxiliary.push('}');
+                            self.advance();
+                            state = 10;
+                            continue;
+                        }
+                        _ => {
+                            self.set_position(position);
+                            return None;
+                        }
+                    }
+                }
+                5 => {
+                    match self.current_char() {
+                        Some(c) if c.is_digit(16) => {  // terceiro
+                            auxiliary.push(c);
+                            lexema.push(c);
+                            self.advance();
+                            state = 6;
+                            continue;
+                        }
+                        Some('}') => {
+                            auxiliary.push('}');
+                            self.advance();
+                            state = 10;
+                            continue;
+                        }
+                        _ => {
+                            self.set_position(position);
+                            return None;
+                        }
+                    }
+                }
+                6 => {
+                    match self.current_char() {
+                        Some(c) if c.is_digit(16) => {  // quarto
+                            auxiliary.push(c);
+                            lexema.push(c);
+                            self.advance();
+                            state = 7;
+                            continue;
+                        }
+                        Some('}') => {
+                            auxiliary.push('}');
+                            self.advance();
+                            state = 10;
+                            continue;
+                        }
+                        _ => {
+                            self.set_position(position);
+                            return None;
+                        }
+                    }
+                }
+                7 => {
+                    match self.current_char() {
+                        Some(c) if c.is_digit(16) => {  // quinto
+                            auxiliary.push(c);
+                            lexema.push(c);
+                            self.advance();
+                            state = 8;
+                            continue;
+                        }
+                        Some('}') => {
+                            auxiliary.push('}');
+                            self.advance();
+                            state = 10;
+                            continue;
+                        }
+                        _ => {
+                            self.set_position(position);
+                            return None;
+                        }
+                    }
+                }
+                8 => {
+                    match self.current_char() {
+                        Some(c) if c.is_digit(16) => {  // sexto
+                            auxiliary.push(c);
+                            lexema.push(c);
+                            self.advance();
+                            state = 9;
+                            continue;
+                        }
+                        Some('}') => {
+                            auxiliary.push('}');
+                            self.advance();
+                            state = 10;
+                            continue;
+                        }
+                        _ => {
+                            self.set_position(position);
+                            return None;
+                        }
+                    }
+                }
+                9 => {
+                    match self.current_char() {
+                        Some('}') => {
+                            auxiliary.push('}');
+                            self.advance();
+                            state = 10;
+                            continue;
+                        }
+                        _ => {
+                            self.set_position(position);
+                            return None;
+                        }
+                    }
+                }
+                10 => {
+                    return std::char::from_u32(u32::from_str_radix(&lexema, 16).unwrap_or(0));
+                }
+                12 => {
+                    return lexema.chars().nth(0);
+                }
+                _ => {
+                    self.set_position(position);
+                    return None;
+                }
+            }
+        }
+    }
+}

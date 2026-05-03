@@ -126,7 +126,7 @@ mod tests {
 
 #[test]
     fn test_string_tokens() {
-        let mut expr = Rust::new(" b r br   b\"ABC\" r\"ABC\" br\"ABC\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
+        let mut expr = Rust::new(" b r br   b\"A\\u{1f980}BC\\n\" r\"A\\u{1f980}BC\\n\" br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
 
         let token = expr.next_token();        assert_eq!(token, Token::Identifier(Tag::IDENTIFIER, "b".into()));
         let token = expr.next_token();        assert_eq!(token, Token::Identifier(Tag::IDENTIFIER, "r".into()));
