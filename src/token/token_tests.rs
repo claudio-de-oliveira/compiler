@@ -2,10 +2,10 @@
 mod tests {
     use crate::tags::{rust_tags::Tag};
     use crate::token::{Rust, Scanner};
-    use crate::token::token::{AssignOp, Token};
+    use crate::token::token::{AssignOp, Token, StringLiteralType};
 
     #[test]
-    fn test_simple_symbols_token() {
+    fn test_symbols_token() {
 
         let mut expr = Rust::new(" ( ) # / ! % = && || & | ^ ? -> . .. ..= * + , - ; @ : _ += &= ^= |= /= *= %= -= >>= <<= ");
 
@@ -107,7 +107,7 @@ mod tests {
     }
 
     #[test]
-    fn test_characters_tokens() {
+    fn test_char_tokens() {
         let mut expr = Rust::new(" '\\u{3b4}' 'a' '\\n' '\\r' '\\t' '\\\\' '\\\'' '\\\"' '\\u{41}' '\\u{1f980}' '_' '?' ' ' ");
 
         let token = expr.next_token();        assert_eq!(token, Token::Character(Tag::CHARACTER, 'δ'));
@@ -125,16 +125,17 @@ mod tests {
     }
 
 #[test]
-    fn test_string_literals_tokens() {
-        let mut expr = Rust::new(" b r br   b\"\" r\"\" br\"\"   r###\"\"### br###\"\"### ");
+    fn test_string_tokens() {
+        let mut expr = Rust::new(" b r br   b\"ABC\" r\"ABC\" br\"ABC\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
 
         let token = expr.next_token();        assert_eq!(token, Token::Identifier(Tag::IDENTIFIER, "b".into()));
         let token = expr.next_token();        assert_eq!(token, Token::Identifier(Tag::IDENTIFIER, "r".into()));
         let token = expr.next_token();        assert_eq!(token, Token::Identifier(Tag::IDENTIFIER, "br".into()));
-        let token = expr.next_token();        assert_eq!(token, Token::StringLiteral(Tag::STRING, "".into()));
-        let token = expr.next_token();        assert_eq!(token, Token::StringLiteral(Tag::STRING, "".into()));
-        let token = expr.next_token();        assert_eq!(token, Token::StringLiteral(Tag::STRING, "".into()));
-        let token = expr.next_token();        assert_eq!(token, Token::StringLiteral(Tag::STRING, "".into()));
-        let token = expr.next_token();        assert_eq!(token, Token::StringLiteral(Tag::STRING, "".into()));
+        let token = expr.next_token();        assert_eq!(token, Token::StringLiteral(Tag::STRING, StringLiteralType::ByteString, "ABC".into()));
+        let token = expr.next_token();        assert_eq!(token, Token::StringLiteral(Tag::STRING, StringLiteralType::Raw(0), "ABC".into()));
+        let token = expr.next_token();        assert_eq!(token, Token::StringLiteral(Tag::STRING, StringLiteralType::RawByte(0), "ABC".into()));
+        let token = expr.next_token();        assert_eq!(token, Token::StringLiteral(Tag::STRING, StringLiteralType::Raw(3), "ABC".into()));
+        let token = expr.next_token();        assert_eq!(token, Token::StringLiteral(Tag::STRING, StringLiteralType::RawByte(3), "ABC".into()));
+        let token = expr.next_token();        assert_eq!(token, Token::StringLiteral(Tag::STRING, StringLiteralType::Standard, "ABC".into()));
     }
 }

@@ -49,11 +49,19 @@ pub enum OrderOp {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub enum StringLiteralType {
+    Standard,       // Texto comum, mensagens de erro, nomes.
+    Raw(usize),     // Regex, caminhos de arquivo, JSON/HTML manual.
+    ByteString,     // Buffers de rede, assinaturas de arquivos binários.
+    RawByte(usize), // Buffers que contêm muitas barras invertidas.
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Keyword(Tag, String),
     Identifier(Tag, String),
     Character(Tag, char),
-    StringLiteral(Tag, String),
+    StringLiteral(Tag, StringLiteralType, String),
     Number(Tag, String),
     LPar(Tag),
     RPar(Tag),
@@ -117,39 +125,32 @@ pub enum Token {
                                  // :	'a: loop {...}	Loop label
 }
 
-enum StringLiteralType {
-    Standard,       // Texto comum, mensagens de erro, nomes.
-    Raw(usize),     // Regex, caminhos de arquivo, JSON/HTML manual.
-    ByteString,     // Buffers de rede, assinaturas de arquivos binários.
-    RawByte(usize), // Buffers que contêm muitas barras invertidas.
-}
-
 pub trait Scanner {
     fn next_token(&mut self) -> Token;
 }
 
 pub struct Rust {
     current_position: usize,
-    chars: Vec<char>,
+    text: String,
 }
 
 impl Rust {
     pub fn new(text: &str) -> Self {
         Rust {
             current_position: 0,
-            chars: text.chars().collect(),
+            text: text.to_string(),
         }
     }
 
     #[inline]
     fn current_char(&self) -> Option<char> {
-        self.chars.get(self.current_position).copied()
+        self.text.chars().nth(self.current_position)
     }
 
     /// Espia o próximo caractere sem avançar a posição
     #[inline]
     fn peek_char(&self) -> Option<char> {
-        self.chars.get(self.current_position + 1).copied()
+        self.text.chars().nth(self.current_position + 1)
     }
 
     /// Avança para o próximo caractere e retorna o caractere atual
@@ -319,6 +320,11 @@ impl Scanner for Rust {
                         Some('\'') => {
                             self.advance();
                             state = 150;
+                            continue;
+                        }
+                        Some('\"') => {
+                            self.advance();
+                            state = 1620;
                             continue;
                         }
                         Some('#') => {
@@ -805,8 +811,8 @@ impl Scanner for Rust {
                             state = 1590;
                             continue;
                         }
-                        Some('"') => {  // \"
-                            lexema.push('"');
+                        Some('\"') => {  // \"
+                            lexema.push('\"');
                             self.advance();
                             state = 1590;
                             continue;
@@ -1107,7 +1113,105 @@ impl Scanner for Rust {
                     match self.current_char() {
                         Some('\"') => {
                             self.advance();
+                            state = 1680;
+                            continue;
+                        }
+                        Some('\\') if string_type == StringLiteralType::Standard || string_type == StringLiteralType::ByteString => {
+                            lexema.push('\\');
+                            self.advance();
+                            state = 1623;
+                            continue;
+                        }
+                        Some('\\') => {
+                            lexema.push('\\');
+                            self.advance();
+                            state = 1625;
+                            continue;
+                        }
+                        Some(c) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 1624;
+                            continue;
+                        }
+                        _ => {
+                            return Token::Error(Tag::ERR, "Literal de string inválido".to_string());
+                        }
+                    }
+                }
+                1623 => {
+                    match self.current_char() {
+                        Some(c) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 1622;
+                            continue;
+                        }
+                        _ => {
+                            return Token::Error(Tag::ERR, "Literal de string inválido".to_string());
+                        }
+                    }
+                }
+
+                1624 => {
+                    match self.current_char() {
+                        Some('\"') => {
+                            self.advance();
+                            state = 1680;
+                            continue;
+                        }
+                        Some(c) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 1624;
+                            continue;
+                        }
+                        _ => {
+                            return Token::Error(Tag::ERR, "Literal de string inválido".to_string());
+                        }
+                    }
+                }
+                1625 => {
+                    match self.current_char() {
+                        Some('u') => {  // \u{...}
+                            self.advance();
                             state = 1630;
+                            continue;
+                        }
+                        Some('n') => {  // \n
+                            lexema.push('\n');
+                            self.advance();
+                            state = 1650;
+                            continue;
+                        }
+                        Some('r') => {  // \r
+                            lexema.push('\r');
+                            self.advance();
+                            state = 1650;
+                            continue;
+                        }
+                        Some('t') => {  // \t
+                            lexema.push('\t');
+                            self.advance();
+                            state = 1650;
+                            continue;
+                        }
+                        Some('\\') => {  // \\
+                            lexema.push('\\');
+                            self.advance();
+                            state = 1650;
+                            continue;
+                        }
+                        Some('\'') => {  // \'
+                            lexema.push('\'');
+                            self.advance();
+                            state = 1650;
+                            continue;
+                        }
+                        Some('\"') => {  // \"
+                            lexema.push('"');
+                            self.advance();
+                            state = 1650;
                             continue;
                         }
                         Some(c) => {
@@ -1124,36 +1228,170 @@ impl Scanner for Rust {
 
                 1630 => {
                     match self.current_char() {
-                        Some('#') => {
-                            counter -= 1;
-                            self.advance();
-                            state = 1630;
-                            continue;
-                        }
-                        _ => {
+                        Some('{') => {
                             self.advance();
                             state = 1631;
                             continue;
                         }
+                        _ => {
+                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
+                        }
                     }
                 }
                 1631 => {
+                    match self.current_char() {
+                        Some(c) if c.is_digit(16) => {  // primeiro
+                            lexema.push(c);
+                            self.advance();
+                            state = 1632;
+                            continue;
+                        }
+                        _ => {
+                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
+                        }
+                    }
+                }
+                1632 => {
+                    match self.current_char() {
+                        Some(c) if c.is_digit(16) => {  // segundo
+                            lexema.push(c);
+                            self.advance();
+                            state = 1633;
+                            continue;
+                        }
+                        Some('}') => {
+                            self.advance();
+                            state = 1638;
+                            continue;
+                        }
+                        _ => {
+                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
+                        }
+                    }
+                }
+                1633 => {
+                    match self.current_char() {
+                        Some(c) if c.is_digit(16) => {  // terceiro
+                            lexema.push(c);
+                            self.advance();
+                            state = 1634;
+                            continue;
+                        }
+                        Some('}') => {
+                            self.advance();
+                            state = 1638;
+                            continue;
+                        }
+                        _ => {
+                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
+                        }
+                    }
+                }
+                1634 => {
+                    match self.current_char() {
+                        Some(c) if c.is_digit(16) => {  // quarto
+                            lexema.push(c);
+                            self.advance();
+                            state = 1635;
+                            continue;
+                        }
+                        Some('}') => {
+                            self.advance();
+                            state = 1638;
+                            continue;
+                        }
+                        _ => {
+                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
+                        }
+                    }
+                }
+                1635 => {
+                    match self.current_char() {
+                        Some(c) if c.is_digit(16) => {  // quinto
+                            lexema.push(c);
+                            self.advance();
+                            state = 1636;
+                            continue;
+                        }
+                        Some('}') => {
+                            self.advance();
+                            state = 1638;
+                            continue;
+                        }
+                        _ => {
+                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
+                        }
+                    }
+                }
+                1636 => {
+                    match self.current_char() {
+                        Some(c) if c.is_digit(16) => {  // sexto
+                            lexema.push(c);
+                            self.advance();
+                            state = 1637;
+                            continue;
+                        }
+                        Some('}') => {
+                            self.advance();
+                            state = 1638;
+                            continue;
+                        }
+                        _ => {
+                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
+                        }
+                    }
+                }
+                1637 => {
+                    match self.current_char() {
+                        Some('}') => {
+                            self.advance();
+                            state = 1638;
+                            continue;
+                        }
+                        _ => {
+                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
+                        }
+                    }
+                }
+                1638 => {
+                    lexema.push(self.current_char().unwrap());
+                    self.advance();
+                    state = 1622;
+                    continue;
+                }
+
+                1650 => {
+                    lexema.push(self.current_char().unwrap());
+                    self.advance();
+                    state = 1622;
+                    continue;
+                }
+                1660 => {
+                    lexema.push(self.current_char().unwrap());
+                    self.advance();
+                    state = 1622;
+                    continue;
+                }
+
+                1680 => {
+                    match self.current_char() {
+                        Some('#') => {
+                            counter -= 1;
+                            self.advance();
+                            state = 1680;
+                            continue;
+                        }
+                        _ => {
+                            self.advance();
+                            state = 1681;
+                            continue;
+                        }
+                    }
+                }
+                1681 => {
                     self.retract();
                     if counter == 0 {
-                        match string_type {
-                            StringLiteralType::Standard => {
-                                return Token::StringLiteral(Tag::STRING, lexema);
-                            }
-                            StringLiteralType::ByteString => {
-                                return Token::StringLiteral(Tag::STRING, lexema);
-                            }
-                            StringLiteralType::Raw(n) => {
-                                return Token::StringLiteral(Tag::STRING, lexema);
-                            }
-                            StringLiteralType::RawByte(n) => {
-                                return Token::StringLiteral(Tag::STRING, lexema);
-                            }
-                        }
+                        return Token::StringLiteral(Tag::STRING, string_type, lexema);
                     }
                     return Token::Error(Tag::ERR, "Literal de string inválido".to_string());
                 }
