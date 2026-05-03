@@ -105,6 +105,8 @@ pub enum Tag {
     OR = T!(87),
     INTERROGATION = T!(88),
     ERR = T!(89),
+    CHARACTER = T!(90),
+    STRING = T!(91),
 }
 
 pub mod keywords {

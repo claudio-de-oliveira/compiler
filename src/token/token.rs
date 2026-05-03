@@ -52,6 +52,8 @@ pub enum OrderOp {
 pub enum Token {
     Keyword(Tag, String),
     Identifier(Tag, String),
+    Character(Tag, char),
+    StringLiteral(Tag, String),
     Number(Tag, String),
     LPar(Tag),
     RPar(Tag),
@@ -115,6 +117,13 @@ pub enum Token {
                                  // :	'a: loop {...}	Loop label
 }
 
+enum StringLiteralType {
+    Standard,       // Texto comum, mensagens de erro, nomes.
+    Raw(usize),     // Regex, caminhos de arquivo, JSON/HTML manual.
+    ByteString,     // Buffers de rede, assinaturas de arquivos binários.
+    RawByte(usize), // Buffers que contêm muitas barras invertidas.
+}
+
 pub trait Scanner {
     fn next_token(&mut self) -> Token;
 }
@@ -162,6 +171,9 @@ impl Scanner for Rust {
     fn next_token(&mut self) -> Token {
         let mut state = 0;
         let mut lexema = String::new();
+        let mut counter = 0;
+        let mut auxiliary = String::new();
+        let mut string_type = StringLiteralType::Standard;
 
         loop {
             match state {
@@ -170,6 +182,20 @@ impl Scanner for Rust {
                         Some(c) if c.is_whitespace() => {
                             self.advance();
                             state = 0;
+                            continue;
+                        }
+                        Some('b') => {
+                            lexema.push('b');
+                            auxiliary.push('b');
+                            self.advance();
+                            state = 160;
+                            continue;
+                        }
+                        Some('r') => {
+                            lexema.push('r');
+                            auxiliary.push('r');
+                            self.advance();
+                            state = 161;
                             continue;
                         }
                         Some(c) if c.is_alphabetic() => {
@@ -288,6 +314,11 @@ impl Scanner for Rust {
                         Some('?') => {
                             self.advance();
                             state = 117;
+                            continue;
+                        }
+                        Some('\'') => {
+                            self.advance();
+                            state = 150;
                             continue;
                         }
                         Some('#') => {
@@ -699,6 +730,435 @@ impl Scanner for Rust {
 
                 117 => {
                     return Token::InterrogationSymbol(Tag::INTERROGATION);
+                }
+
+                150 => {
+                    match self.current_char() {
+                        Some('\\') => {
+                            self.advance();
+                            state = 1502;
+                            continue;
+                        }
+                        Some(c) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 1590;
+                            continue;
+                        }
+                        _ => {
+                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
+                        }
+                    }
+                }
+                1501 => {
+                    match self.current_char() {
+                        Some('\\') => {  // \\
+                            self.advance();
+                            state = 1502;
+                            continue;
+                        }
+                        Some(c) if c != '\'' => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 1590;
+                            continue;
+                        }
+                        _ => {
+                            todo!();
+                        }
+                    }
+                }
+                1502 => {
+                    match self.current_char() {
+                        Some('u') => {  // \u{...}
+                            self.advance();
+                            state = 1503;
+                            continue;
+                        }
+                        Some('n') => {  // \n
+                            lexema.push('\n');
+                            self.advance();
+                            state = 1590;
+                            continue;
+                        }
+                        Some('r') => {  // \r
+                            lexema.push('\r');
+                            self.advance();
+                            state = 1590;
+                            continue;
+                        }
+                        Some('t') => {  // \t
+                            lexema.push('\t');
+                            self.advance();
+                            state = 1590;
+                            continue;
+                        }
+                        Some('\\') => {  // \\
+                            lexema.push('\\');
+                            self.advance();
+                            state = 1590;
+                            continue;
+                        }
+                        Some('\'') => {  // \'
+                            lexema.push('\'');
+                            self.advance();
+                            state = 1590;
+                            continue;
+                        }
+                        Some('"') => {  // \"
+                            lexema.push('"');
+                            self.advance();
+                            state = 1590;
+                            continue;
+                        }
+                        _ => {
+                            todo!();
+                        }
+                    }
+                }
+                1503 => {
+                    match self.current_char() {
+                        Some('{') => {
+                            self.advance();
+                            state = 1504;
+                            continue;
+                        }
+                        _ => {
+                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
+                        }
+                    }
+                }
+                1504 => {
+                    match self.current_char() {
+                        Some(c) if c.is_digit(16) => {  // primeiro
+                            lexema.push(c);
+                            self.advance();
+                            state = 1505;
+                            continue;
+                        }
+                        _ => {
+                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
+                        }
+                    }
+                }
+                1505 => {
+                    match self.current_char() {
+                        Some(c) if c.is_digit(16) => {  // segundo
+                            lexema.push(c);
+                            self.advance();
+                            state = 1506;
+                            continue;
+                        }
+                        Some('}') => {
+                            self.advance();
+                            state = 1511;
+                            continue;
+                        }
+                        _ => {
+                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
+                        }
+                    }
+                }
+                1506 => {
+                    match self.current_char() {
+                        Some(c) if c.is_digit(16) => {  // terceiro
+                            lexema.push(c);
+                            self.advance();
+                            state = 1507;
+                            continue;
+                        }
+                        Some('}') => {
+                            self.advance();
+                            state = 1511;
+                            continue;
+                        }
+                        _ => {
+                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
+                        }
+                    }
+                }
+                1507 => {
+                    match self.current_char() {
+                        Some(c) if c.is_digit(16) => {  // quarto
+                            lexema.push(c);
+                            self.advance();
+                            state = 1508;
+                            continue;
+                        }
+                        Some('}') => {
+                            self.advance();
+                            state = 1511;
+                            continue;
+                        }
+                        _ => {
+                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
+                        }
+                    }
+                }
+                1508 => {
+                    match self.current_char() {
+                        Some(c) if c.is_digit(16) => {  // quinto
+                            lexema.push(c);
+                            self.advance();
+                            state = 1509;
+                            continue;
+                        }
+                        Some('}') => {
+                            self.advance();
+                            state = 1511;
+                            continue;
+                        }
+                        _ => {
+                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
+                        }
+                    }
+                }
+                1509 => {
+                    match self.current_char() {
+                        Some(c) if c.is_digit(16) => {  // sexto
+                            lexema.push(c);
+                            self.advance();
+                            state = 1510;
+                            continue;
+                        }
+                        Some('}') => {
+                            self.advance();
+                            state = 1511;
+                            continue;
+                        }
+                        _ => {
+                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
+                        }
+                    }
+                }
+                1510 => {
+                    match self.current_char() {
+                        Some('}') => {
+                            self.advance();
+                            state = 1511;
+                            continue;
+                        }
+                        _ => {
+                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
+                        }
+                    }
+                }
+                1511 => {
+                    match self.current_char() {
+                        Some('\'') => {
+                            self.advance();
+                            state = 1512;
+                            continue;
+                        }
+                        _ => {
+                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
+                        }
+                    }
+                }
+                1512 => {
+                    return Token::Character(Tag::CHARACTER, std::char::from_u32(u32::from_str_radix(&lexema, 16).unwrap_or(0)).unwrap_or('\0'));
+                }
+                1590 => {
+                    match self.current_char() {
+                        Some('\'') => {
+                            self.advance();
+                            state = 1599;
+                            continue;
+                        }
+                        _ => {
+                            return Token::Error(Tag::ERR, "Literal de caractere inválido".to_string());
+                        }
+                    }
+                }
+                1599 => {
+                    return Token::Character(Tag::CHARACTER, lexema.chars().nth(0).unwrap_or('\0'));
+                }
+
+                160 => {
+                    match self.current_char() {
+                        Some('r') => {  // br
+                            lexema.push('r');
+                            auxiliary.push('r');
+                            self.advance();
+                            state = 161;
+                            continue;
+                        }
+                        Some('\"') => {  // bu
+                            self.advance();
+                            state = 1620;
+                            continue;
+                        }
+                        Some(c) if c.is_alphanumeric() => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 10;
+                            continue;
+                        }
+                        Some('_') => {
+                            lexema.push('_');
+                            self.advance();
+                            state = 13;
+                            continue;
+                        }
+                        Some('!') => {
+                            lexema.push('!');
+                            self.advance();
+                            state = 12;
+                            continue;
+                        }
+                        _ => {
+                            self.advance();
+                            state = 11;
+                            continue;
+                        }
+                    }
+                }
+                161 => {
+                    match self.current_char() {
+                        Some('\"') => {
+                            self.advance();
+                            state = 1620;
+                            continue;
+                        }
+                        Some(c) if c.is_alphanumeric() => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 10;
+                            continue;
+                        }
+                        Some('_') => {
+                            lexema.push('_');
+                            self.advance();
+                            state = 13;
+                            continue;
+                        }
+                        Some('!') => {
+                            lexema.push('!');
+                            self.advance();
+                            state = 12;
+                            continue;
+                        }
+                        Some('#') => {  // bu
+                            counter += 1;
+                            self.advance();
+                            state = 1602;
+                            continue;
+                        }
+                        _ => {
+                            self.advance();
+                            state = 11;
+                            continue;
+                        }
+                    }
+                }
+                1601 => {
+                    match self.current_char() {
+                        Some('\"') => {
+                            self.advance();
+                            state = 1620;
+                            continue;
+                        }
+                        Some('#') => {  // bu
+                            counter += 1;
+                            self.advance();
+                            state = 1602;
+                            continue;
+                        }
+                        _ => {
+                            return Token::Error(Tag::ERR, "Identificador de byte inválido".to_string());
+                        }
+                    }
+                }
+                1602 => {
+                    match self.current_char() {
+                        Some('\"') => {  // bu
+                            self.advance();
+                            state = 1620;
+                            continue;
+                        }
+                        Some('#') => {  // bu
+                            counter += 1;
+                            self.advance();
+                            state = 1602;
+                            continue;
+                        }
+                        _ => {
+                            return Token::Error(Tag::ERR, "Identificador de byte inválido".to_string());
+                        }
+                    }
+                }
+                1620 => {
+                    if auxiliary == "b" {
+                        string_type = StringLiteralType::ByteString;
+                    } else if auxiliary == "r" {
+                        string_type = StringLiteralType::Raw(counter);
+                    } else if auxiliary == "br" {
+                        string_type = StringLiteralType::RawByte(counter);
+                    } else {
+                        string_type = StringLiteralType::Standard;
+                    }
+                    lexema.clear();
+                    self.advance();
+                    state = 1622;
+                    continue;
+                }
+                1622 => {
+                    self.retract();
+                    match self.current_char() {
+                        Some('\"') => {
+                            self.advance();
+                            state = 1630;
+                            continue;
+                        }
+                        Some(c) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 1622;
+                            continue;
+                        }
+                        _ => {
+                            return Token::Error(Tag::ERR, "Literal de string inválido".to_string());
+                        }
+                    }
+                }
+
+                1630 => {
+                    match self.current_char() {
+                        Some('#') => {
+                            counter -= 1;
+                            self.advance();
+                            state = 1630;
+                            continue;
+                        }
+                        _ => {
+                            self.advance();
+                            state = 1631;
+                            continue;
+                        }
+                    }
+                }
+                1631 => {
+                    self.retract();
+                    if counter == 0 {
+                        match string_type {
+                            StringLiteralType::Standard => {
+                                return Token::StringLiteral(Tag::STRING, lexema);
+                            }
+                            StringLiteralType::ByteString => {
+                                return Token::StringLiteral(Tag::STRING, lexema);
+                            }
+                            StringLiteralType::Raw(n) => {
+                                return Token::StringLiteral(Tag::STRING, lexema);
+                            }
+                            StringLiteralType::RawByte(n) => {
+                                return Token::StringLiteral(Tag::STRING, lexema);
+                            }
+                        }
+                    }
+                    return Token::Error(Tag::ERR, "Literal de string inválido".to_string());
+                }
+                1690 => {
+                    todo!();
                 }
 
                 999 => {

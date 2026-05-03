@@ -106,4 +106,35 @@ mod tests {
         let token = expr.next_token();        assert_eq!(token, Token::Keyword(Tag::TRY, "try".into()));
     }
 
+    #[test]
+    fn test_characters_tokens() {
+        let mut expr = Rust::new(" '\\u{3b4}' 'a' '\\n' '\\r' '\\t' '\\\\' '\\\'' '\\\"' '\\u{41}' '\\u{1f980}' '_' '?' ' ' ");
+
+        let token = expr.next_token();        assert_eq!(token, Token::Character(Tag::CHARACTER, 'δ'));
+        let token = expr.next_token();        assert_eq!(token, Token::Character(Tag::CHARACTER, 'a'));
+        let token = expr.next_token();        assert_eq!(token, Token::Character(Tag::CHARACTER, '\n'));
+        let token = expr.next_token();        assert_eq!(token, Token::Character(Tag::CHARACTER, '\r'));
+        let token = expr.next_token();        assert_eq!(token, Token::Character(Tag::CHARACTER, '\t'));
+        let token = expr.next_token();        assert_eq!(token, Token::Character(Tag::CHARACTER, '\\'));
+        let token = expr.next_token();        assert_eq!(token, Token::Character(Tag::CHARACTER, '\''));
+        let token = expr.next_token();        assert_eq!(token, Token::Character(Tag::CHARACTER, '\"'));
+        let token = expr.next_token();        assert_eq!(token, Token::Character(Tag::CHARACTER, 'A'));
+        let token = expr.next_token();        assert_eq!(token, Token::Character(Tag::CHARACTER, '🦀'));
+        let token = expr.next_token();        assert_eq!(token, Token::Character(Tag::CHARACTER, '_'));
+        let token = expr.next_token();        assert_eq!(token, Token::Character(Tag::CHARACTER, '?'));
+    }
+
+#[test]
+    fn test_string_literals_tokens() {
+        let mut expr = Rust::new(" b r br   b\"\" r\"\" br\"\"   r###\"\"### br###\"\"### ");
+
+        let token = expr.next_token();        assert_eq!(token, Token::Identifier(Tag::IDENTIFIER, "b".into()));
+        let token = expr.next_token();        assert_eq!(token, Token::Identifier(Tag::IDENTIFIER, "r".into()));
+        let token = expr.next_token();        assert_eq!(token, Token::Identifier(Tag::IDENTIFIER, "br".into()));
+        let token = expr.next_token();        assert_eq!(token, Token::StringLiteral(Tag::STRING, "".into()));
+        let token = expr.next_token();        assert_eq!(token, Token::StringLiteral(Tag::STRING, "".into()));
+        let token = expr.next_token();        assert_eq!(token, Token::StringLiteral(Tag::STRING, "".into()));
+        let token = expr.next_token();        assert_eq!(token, Token::StringLiteral(Tag::STRING, "".into()));
+        let token = expr.next_token();        assert_eq!(token, Token::StringLiteral(Tag::STRING, "".into()));
+    }
 }
