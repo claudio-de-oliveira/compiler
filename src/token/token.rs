@@ -59,6 +59,14 @@ pub enum StringLiteralType {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub enum CommentType {
+    Line(String),
+    Block(String),
+    ExpDoc(String),
+    IntDoc(String),
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Keyword(Tag, String),
     Identifier(Tag, String),
@@ -170,6 +178,97 @@ impl Rust {
     fn retract(&mut self) {
         if self.current_position > 0 {
             self.current_position -= 1;
+        }
+    }
+
+    fn ignore_until_eol(&mut self) -> String {
+        // let rest = self.text.get(self.current_position..);
+        let rest = self.text.chars().skip(self.current_position).collect()
+        let eol = rest.find('\n').unwrap_or(rest.len());
+        rest[..eol].to_string()    
+    }
+
+    fn ignore_until_eob(&mut self) -> Return<String> {
+        let mut state = 0;
+        let mut text: String::new();
+        let mut counter = 1;
+
+        loop {
+            match state {
+                0 => {
+                    match self.current_char() {
+                        Some('*') => {
+                            self.advance();
+                            state = 1;
+                            continue;
+                        }
+                        Some('/') => {
+                            self.advance();
+                            state = 3;
+                            continue;
+                        }
+                        Some('#') => {
+                            todo!();
+                        }
+                        Some(c) => {
+                            text.push(c);
+                            self.advance();
+                            state = 0;
+                            continue;
+                        }
+                    }
+                }
+                1 => {
+                    match self.current_char() {
+                        Some('/') if counter == 0 => {
+                            self.advance();
+                            state = 2;
+                            continue;
+                        }
+                        Some('/') => {
+                            text.push('*');
+                            text.push('/');
+                            counter -= 1;
+                            self.advance();
+                            state = 0;
+                            continue;
+                        }
+                        Some(c) => {
+                            text.push(c);
+                            self.advance();
+                            state = 0;
+                            continue;
+                        }
+                    }
+                }
+                2 => {
+                    return Ok(text);
+                }
+                3 => {
+                    match self.current_char() {
+                        Some('*') => {
+                            counter += 1;
+                            self.advance();
+                            state = 0;
+                            continue;
+                        }
+                        Some('/') => {
+                            self.advance();
+                            state = 3;
+                            continue;
+                        }
+                        Some('#') => {
+                            todo!();
+                        }
+                        Some(c) => {
+                            text.push(c);
+                            self.advance();
+                            state = 0;
+                            continue;
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -574,6 +673,16 @@ impl Scanner for Rust {
 
                 108 => {
                     match self.current_char() {
+                        Some('/') => {
+                            self.advance();
+                            state = 1082;
+                            continue;
+                        }
+                        Some('*') => {
+                            self.advance();
+                            state = 1085;
+                            continue;
+                        }
                         Some('=') => {
                             self.advance();
                             state = 1081;
@@ -586,6 +695,36 @@ impl Scanner for Rust {
                 }
                 1081 => {
                     return Token::OpAssignment(Tag::OPASSIGN, AssignOp::DivAssign);
+                }
+                1082 => {
+                    match self.current_char() {
+                        Some('/') => {
+                            self.advance();
+                            state = 1083
+                            continue;
+                        }
+                        Some('!') => {
+                            self.advance();
+                            state = 1084;
+                            continue;
+                        }
+                        _  => {
+                            let text = self.ignore_rest_of_line();
+                            return Token::Comment(Tag::COMMENT, CommentType::Line, text);
+                        }
+                    }
+                }
+                1083 => {
+                    let text = self.ignore_until_eol();
+                    return Token::Comment(Tag::COMMENT, CommentType::ExternalDoc, text);
+                }
+                1084 => {
+                    let text = self.ignore_until_eol();
+                    return Token::Comment(Tag::COMMENT, CommentType::InternalDoc, text);
+                }
+                1085 => {
+                    let text = self.ignore_until_eob();
+                    return Token::Comment(Tag::COMMENT, CommentType::Block, text);
                 }
 
                 109 => {
