@@ -107,6 +107,8 @@ pub enum Tag {
     ERR = T!(89),
     CHARACTER = T!(90),
     STRING = T!(91),
+
+    COMMENT = T!(9999),
 }
 
 pub mod keywords {
