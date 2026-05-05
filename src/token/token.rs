@@ -68,71 +68,71 @@ pub enum CommentType {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
-    Keyword(Tag, String),
-    Identifier(Tag, String),
-    Character(Tag, char),
-    StringLiteral(Tag, StringLiteralType, String),
-    Number(Tag, String),
-    LPar(Tag),
-    RPar(Tag),
-    EndMark(Tag),
-    Error(Tag, String),
-    DefaultPattern(Tag),
-    Division(Tag),               // /	expr / expr	Arithmetic division	Div
-    Not(Tag),                    // !	!expr	Bitwise or logical complement	Not
-    Equality(Tag, EqualityOp),   // !=	expr != expr	Nonequality comparison	PartialEq
-                                 // ==	expr == expr	Equality comparison	PartialEq
-    Remainder(Tag),              // %	expr % expr	Arithmetic remainder	Rem
-    Assignment(Tag),             // =	var = expr, ident = type	Assignment/equivalence
-    OpAssignment(Tag, AssignOp), // %=	var %= expr	Arithmetic remainder and assignment	RemAssign
-                                 // &=	var &= expr	Bitwise AND and assignment	BitAndAssign
-                                 // *=	var *= expr	Arithmetic multiplication and assignment	MulAssign
-                                 // /=	var /= expr	Arithmetic divisionn and assignment	DivAssign
-                                 // +=	var += expr	Arithmetic addition and assignment	AddAssign
-                                 // -=	var -= expr	Arithmetic subtraction and assignment	SubAssign
-                                 // <<=	var <<= expr	Left-shift and assignment	ShlAssign
-                                 // >>=	var >>= expr	Right-shift and assignment	ShrAssign
-    LogicalAnd(Tag),             // &&	expr && expr	Short-circuiting logical AND
-    LogicalOr(Tag),              // ||	expr || expr	Short-circuiting logical OR
-    BitwiseAnd(Tag),             // &	expr & expr	Bitwise AND	BitAnd
-    BitwiseOr(Tag),              // |	expr | expr	Bitwise OR	BitOr
-    BitwiseXor(Tag),             // ^	expr ^ expr	Bitwise exclusive OR	BitXor
-    BitwiseAndAssign(Tag),       // &=	expr & expr	Bitwise AND	BitAnd
-    BitwiseOrAssign(Tag),        // |=	var |= expr	Bitwise OR and assignment	BitOrAssign
-    BitwiseXorAssign(Tag),       // ^=	var ^= expr	Bitwise exclusive OR and assignment	BitXorAssign
-    InterrogationSymbol(Tag),    // ?   expr?	Error propagation
-    MatchArm(Tag),               // =>	pat => expr	Part of match arm syntax
-    ShiftOp(Tag, ShiftDir),      // <<	<	expr << expr	Left-shift	Shl
-    StarSymbol(Tag),             // * 	expr * expr	Arithmetic multiplication	Mul
-                                 // *	*expr	Dereference	Deref
-                                 // *	*const type, *mut type	Raw pointer
-    PlusSymbol(Tag),             // +	trait + trait, 'a + trait	Compound type constraint
-                                 // +	expr + expr	Arithmetic addition	Add
-    CommaSymbol(Tag),            // ,   expr, expr	Argument and element separator
-    MinusSymbol(Tag),            // - 	- expr	Arithmetic negation	Neg
-                                 // -	expr - expr	Arithmetic subtraction	Sub
-    ReturnType(Tag),             // ->	fn(...) -> type, |…| -> type	Function and closure return type
-    SglPtSymbol(Tag),            // .	expr.ident	Field access
-                                 // .	expr.ident(expr, ...)	Method call
-                                 // .	expr.0, expr.1, and so on	Tuple indexing
-    DblPtSymbol(Tag),            // ..	.., expr.., ..expr, expr..expr	Right-exclusive range literal	PartialOrd
-                                 // ..	..expr	Struct literal update syntax
-                                 // ..	variant(x, ..), struct_type { x, .. }	“And the rest” pattern binding
-    InclusiveRange(Tag),         // ..=	..=expr, expr..=expr	Right-inclusive range literal	PartialOrd
-    AmpersandSymbol(Tag),        // &	&expr, &mut expr	Borrow
-                                 // &	&type, &mut type, &'a type, &'a mut type	Borrowed pointer type
-                                 // &	expr & expr	Bitwise AND	BitAnd
-    SemicolonSymbol(Tag),        // ;	expr;	Statement and item terminator
-                                 // ;	[...; len]	Part of fixed-size array syntax
-    EqualSymbol(Tag),            // =	var = expr, ident = type	Assignment/equivalence
-    Comparison(Tag, OrderOp),    // <	expr < expr	Less than comparison	PartialOrd
-                                 // >	expr > expr	Greater than comparison	PartialOrd
-    VerticalBarSymbol(Tag),      // |	pat | pat	Pattern alternatives
-                                 // |	expr | expr	Bitwise OR	BitOr
-    AtSymbol(Tag),               // @	ident @ pat	Pattern binding
-    ColonSymbol(Tag),            // :	pat: type, ident: type	Constraints
-                                 // :	ident: expr	Struct field initializer
-                                 // :	'a: loop {...}	Loop label
+    Keyword(Tag, row, col, String),
+    Identifier(Tag, row, col, String),
+    Character(Tag, row, col, char),
+    StringLiteral(Tag, row, col, StringLiteralType, String),
+    Number(Tag, row, col, String),
+    LPar(Tag, row, col),
+    RPar(Tag, row, col),
+    EndMark(Tag, row, col),
+    Error(Tag, row, col, String),
+    DefaultPattern(, row, colTag),
+    Division(Tag, row, col),               // /	expr / expr	Arithmetic division	Div
+    Not(Tag, row, col),                    // !	!expr	Bitwise or logical complement	Not
+    Equality(Tag, row, col, EqualityOp),   // !=	expr != expr	Nonequality comparison	PartialEq
+                                           // ==	expr == expr	Equality comparison	PartialEq
+    Remainder(Tag, row, col),              // %	expr % expr	Arithmetic remainder	Rem
+    Assignment(Tag, row, col),             // =	var = expr, ident = type	Assignment/equivalence
+    OpAssignment(Tag, row, col, AssignOp), // %=	var %= expr	Arithmetic remainder and assignment	RemAssign
+                                           // &=	var &= expr	Bitwise AND and assignment	BitAndAssign
+                                           // *=	var *= expr	Arithmetic multiplication and assignment	MulAssign
+                                           // /=	var /= expr	Arithmetic divisionn and assignment	DivAssign
+                                           // +=	var += expr	Arithmetic addition and assignment	AddAssign
+                                           // -=	var -= expr	Arithmetic subtraction and assignment	SubAssign
+                                           // <<=	var <<= expr	Left-shift and assignment	ShlAssign
+                                           // >>=	var >>= expr	Right-shift and assignment	ShrAssign
+    LogicalAnd(Tag, row, col),             // &&	expr && expr	Short-circuiting logical AND
+    LogicalOr(Tag, row, col),              // ||	expr || expr	Short-circuiting logical OR
+    BitwiseAnd(Tag, row, col),             // &	expr & expr	Bitwise AND	BitAnd
+    BitwiseOr(Tag, row, col),              // |	expr | expr	Bitwise OR	BitOr
+    BitwiseXor(Tag, row, col),             // ^	expr ^ expr	Bitwise exclusive OR	BitXor
+    BitwiseAndAssign(Tag, row, col),       // &=	expr & expr	Bitwise AND	BitAnd
+    BitwiseOrAssign(Tag, row, col),        // |=	var |= expr	Bitwise OR and assignment	BitOrAssign
+    BitwiseXorAssign(Tag, row, col),       // ^=	var ^= expr	Bitwise exclusive OR and assignment	BitXorAssign
+    InterrogationSymbol(Tag, row, col),    // ?   expr?	Error propagation
+    MatchArm(Tag, row, col),               // =>	pat => expr	Part of match arm syntax
+    ShiftOp(Tag, row, col, ShiftDir),      // <<	<	expr << expr	Left-shift	Shl
+    StarSymbol(Tag, row, col),             // * 	expr * expr	Arithmetic multiplication	Mul
+                                           // *	*expr	Dereference	Deref
+                                           // *	*const type, *mut type	Raw pointer
+    PlusSymbol(Tag, row, col),             // +	trait + trait, 'a + trait	Compound type constraint
+                                           // +	expr + expr	Arithmetic addition	Add
+    CommaSymbol(Tag, row, col),            // ,   expr, expr	Argument and element separator
+    MinusSymbol(Tag, row, col),            // - 	- expr	Arithmetic negation	Neg
+                                           // -	expr - expr	Arithmetic subtraction	Sub
+    ReturnType(Tag, row, col),             // ->	fn(...) -> type, |…| -> type	Function and closure return type
+    SglPtSymbol(Tag, row, col),            // .	expr.ident	Field access
+                                           // .	expr.ident(expr, ...)	Method call
+                                           // .	expr.0, expr.1, and so on	Tuple indexing
+    DblPtSymbol(Tag, row, col),            // ..	.., expr.., ..expr, expr..expr	Right-exclusive range literal	PartialOrd
+                                           // ..	..expr	Struct literal update syntax
+                                           // ..	variant(x, ..), struct_type { x, .. }	“And the rest” pattern binding
+    InclusiveRange(Tag, row, col),         // ..=	..=expr, expr..=expr	Right-inclusive range literal	PartialOrd
+    AmpersandSymbol(Tag, row, col),        // &	&expr, &mut expr	Borrow
+                                           // &	&type, &mut type, &'a type, &'a mut type	Borrowed pointer type
+                                           // &	expr & expr	Bitwise AND	BitAnd
+    SemicolonSymbol(Tag, row, col),        // ;	expr;	Statement and item terminator
+                                           // ;	[...; len]	Part of fixed-size array syntax
+    EqualSymbol(Tag, row, col),            // =	var = expr, ident = type	Assignment/equivalence
+    Comparison(Tag, row, col, OrderOp),    // <	expr < expr	Less than comparison	PartialOrd
+                                           // >	expr > expr	Greater than comparison	PartialOrd
+    VerticalBarSymbol(Tag, row, col),      // |	pat | pat	Pattern alternatives
+                                           // |	expr | expr	Bitwise OR	BitOr
+    AtSymbol(Tag, row, col),               // @	ident @ pat	Pattern binding
+    ColonSymbol(Tag, row, col),            // :	pat: type, ident: type	Constraints
+                                           // :	ident: expr	Struct field initializer
+                                           // :	'a: loop {...}	Loop label
 }
 
 pub trait Scanner {
@@ -142,6 +142,8 @@ pub trait Scanner {
 pub struct Rust {
     current_position: usize,
     text: String,
+    row: u32,
+    col: u32,
 }
 
 impl Rust {
@@ -149,12 +151,23 @@ impl Rust {
         Rust {
             current_position: 0,
             text: text.to_string(),
+            row = 0,
+            col = 0,
         }
     }
 
     #[inline]
     fn get_position(&self) -> usize {
         self.current_position
+    }
+
+    #[inline]
+    fn current_row(&self) -> usize {
+        self.row
+    }
+    #[inline]
+    fn current_col(&self) -> usize {
+        self.col
     }
 
     #[inline]
@@ -168,16 +181,31 @@ impl Rust {
     }
 
     /// Avança para o próximo caractere e retorna o caractere atual
-    #[inline]
     fn advance(&mut self) {
         self.current_position += 1;
+        match self.current_char() {
+            Some('\n') => {
+                row += 1; col = 0;
+            }
+            Some('\r') => {
+                col = 0;
+                todo!();
+            }
+            _ => {
+                col += 1;
+            }
+        }
     }
 
     /// Volta uma posição com segurança (não vai abaixo de 0)
-    #[inline]
     fn retract(&mut self) {
         if self.current_position > 0 {
             self.current_position -= 1;
+        }
+        if col == 0 {
+            row -= 1;
+        } else {
+            col -= 1;
         }
     }
 
