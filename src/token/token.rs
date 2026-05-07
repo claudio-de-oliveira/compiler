@@ -480,6 +480,11 @@ impl Scanner for Rust {
                             state = 1;
                             continue;
                         }
+                        Some('_') => {
+                            self.advance();
+                            state = 1;
+                            continue;
+                        }
                         _ => {
                             self.advance();
                             state = 2;
@@ -1625,3 +1630,167 @@ impl Rust {
         }
     }
 }
+
+/*
+(* ===================================================== *)
+(* LITERAIS NUMÉRICOS DA LINGUAGEM RUST — EBNF COMPLETA  *)
+(* ===================================================== *)
+
+numeric_literal
+    = integer_literal
+    | float_literal
+    ;
+
+(* ===================================================== *)
+(* INTEIROS                                               *)
+(* ===================================================== *)
+
+integer_literal
+    =
+      decimal_literal [ integer_suffix ]
+    | binary_literal  [ integer_suffix ]
+    | octal_literal   [ integer_suffix ]
+    | hex_literal     [ integer_suffix ]
+    ;
+
+decimal_literal
+    =
+      "0"
+    | nonzero_digit { decimal_digit_or_underscore }
+    ;
+
+binary_literal
+    =
+      "0" ("b" | "B") binary_digit
+      { binary_digit_or_underscore }
+    ;
+
+octal_literal
+    =
+      "0" ("o" | "O") octal_digit
+      { octal_digit_or_underscore }
+    ;
+
+hex_literal
+    =
+      "0" ("x" | "X") hex_digit
+      { hex_digit_or_underscore }
+    ;
+
+(* ===================================================== *)
+(* FLOATS                                                 *)
+(* ===================================================== *)
+
+float_literal
+    =
+      decimal_float [ float_suffix ]
+    ;
+
+decimal_float
+    =
+        decimal_digits "." [ decimal_digits ] [ exponent_part ]
+      | "." decimal_digits [ exponent_part ]
+      | decimal_digits exponent_part
+    ;
+
+exponent_part
+    =
+      ("e" | "E")
+      [ "+" | "-" ]
+      decimal_digits
+    ;
+
+(* ===================================================== *)
+(* SUFIXOS                                                *)
+(* ===================================================== *)
+
+integer_suffix
+    =
+        "u8"
+      | "u16"
+      | "u32"
+      | "u64"
+      | "u128"
+      | "usize"
+      | "i8"
+      | "i16"
+      | "i32"
+      | "i64"
+      | "i128"
+      | "isize"
+    ;
+
+float_suffix
+    =
+        "f32"
+      | "f64"
+    ;
+
+(* ===================================================== *)
+(* SEQUÊNCIAS DE DÍGITOS                                  *)
+(* ===================================================== *)
+
+decimal_digits
+    =
+      decimal_digit
+      { decimal_digit_or_underscore }
+    ;
+
+decimal_digit_or_underscore
+    =
+        decimal_digit
+      | "_"
+    ;
+
+binary_digit_or_underscore
+    =
+        binary_digit
+      | "_"
+    ;
+
+octal_digit_or_underscore
+    =
+        octal_digit
+      | "_"
+    ;
+
+hex_digit_or_underscore
+    =
+        hex_digit
+      | "_"
+    ;
+
+(* ===================================================== *)
+(* TERMINAIS                                              *)
+(* ===================================================== *)
+
+decimal_digit
+    =
+        "0" | "1" | "2" | "3" | "4"
+      | "5" | "6" | "7" | "8" | "9"
+    ;
+
+nonzero_digit
+    =
+        "1" | "2" | "3" | "4" | "5"
+      | "6" | "7" | "8" | "9"
+    ;
+
+binary_digit
+    =
+        "0" | "1"
+    ;
+
+octal_digit
+    =
+        "0" | "1" | "2" | "3"
+      | "4" | "5" | "6" | "7"
+    ;
+
+hex_digit
+    =
+        decimal_digit
+      | "a" | "b" | "c" | "d" | "e" | "f"
+      | "A" | "B" | "C" | "D" | "E" | "F"
+    ;
+*/
