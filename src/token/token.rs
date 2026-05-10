@@ -58,33 +58,54 @@ pub enum StringLiteralType {
     RawByte(usize), // Buffers que contêm muitas barras invertidas.
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum FloatLiteralType {
+    F32,
+    F64,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum IntegerLiteralType {
+    I8,
+    I16,
+    I32,
+    I64,
+    ISIZE,
+    U8,
+    U16,
+    U32,
+    U64,
+    USIZE,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum CommentType {
-    Line(String),
-    Block(String),
-    ExpDoc(String),
-    IntDoc(String),
+    Line,
+    Block,
+    ExtDoc,
+    IntDoc,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
-    Keyword(Tag, row, col, String),
-    Identifier(Tag, row, col, String),
-    Character(Tag, row, col, char),
-    StringLiteral(Tag, row, col, StringLiteralType, String),
-    Number(Tag, row, col, String),
-    LPar(Tag, row, col),
-    RPar(Tag, row, col),
-    EndMark(Tag, row, col),
-    Error(Tag, row, col, String),
-    DefaultPattern(, row, colTag),
-    Division(Tag, row, col),               // /	expr / expr	Arithmetic division	Div
-    Not(Tag, row, col),                    // !	!expr	Bitwise or logical complement	Not
-    Equality(Tag, row, col, EqualityOp),   // !=	expr != expr	Nonequality comparison	PartialEq
+    Keyword(Tag, usize, usize, String),
+    Identifier(Tag, usize, usize, String),
+    Character(Tag, usize, usize, char),
+    StringLiteral(Tag, usize, usize, StringLiteralType, String),
+    Integer(Tag, usize, usize, String, IntegerLiteralType),
+    Float(Tag, usize, usize, String, FloatLiteralType),
+    LPar(Tag, usize, usize),
+    RPar(Tag, usize, usize),
+    EndMark(Tag, usize, usize),
+    Error(Tag, usize, usize, String),
+    DefaultPattern(Tag, usize, usize),
+    Division(Tag, usize, usize),               // /	expr / expr	Arithmetic division	Div
+    Not(Tag, usize, usize),                    // !	!expr	Bitwise or logical complement	Not
+    Equality(Tag, usize, usize, EqualityOp),   // !=	expr != expr	Nonequality comparison	PartialEq
                                            // ==	expr == expr	Equality comparison	PartialEq
-    Remainder(Tag, row, col),              // %	expr % expr	Arithmetic remainder	Rem
-    Assignment(Tag, row, col),             // =	var = expr, ident = type	Assignment/equivalence
-    OpAssignment(Tag, row, col, AssignOp), // %=	var %= expr	Arithmetic remainder and assignment	RemAssign
+    Remainder(Tag, usize, usize),              // %	expr % expr	Arithmetic remainder	Rem
+    Assignment(Tag, usize, usize),             // =	var = expr, ident = type	Assignment/equivalence
+    OpAssignment(Tag, usize, usize, AssignOp), // %=	var %= expr	Arithmetic remainder and assignment	RemAssign
                                            // &=	var &= expr	Bitwise AND and assignment	BitAndAssign
                                            // *=	var *= expr	Arithmetic multiplication and assignment	MulAssign
                                            // /=	var /= expr	Arithmetic divisionn and assignment	DivAssign
@@ -92,65 +113,66 @@ pub enum Token {
                                            // -=	var -= expr	Arithmetic subtraction and assignment	SubAssign
                                            // <<=	var <<= expr	Left-shift and assignment	ShlAssign
                                            // >>=	var >>= expr	Right-shift and assignment	ShrAssign
-    LogicalAnd(Tag, row, col),             // &&	expr && expr	Short-circuiting logical AND
-    LogicalOr(Tag, row, col),              // ||	expr || expr	Short-circuiting logical OR
-    BitwiseAnd(Tag, row, col),             // &	expr & expr	Bitwise AND	BitAnd
-    BitwiseOr(Tag, row, col),              // |	expr | expr	Bitwise OR	BitOr
-    BitwiseXor(Tag, row, col),             // ^	expr ^ expr	Bitwise exclusive OR	BitXor
-    BitwiseAndAssign(Tag, row, col),       // &=	expr & expr	Bitwise AND	BitAnd
-    BitwiseOrAssign(Tag, row, col),        // |=	var |= expr	Bitwise OR and assignment	BitOrAssign
-    BitwiseXorAssign(Tag, row, col),       // ^=	var ^= expr	Bitwise exclusive OR and assignment	BitXorAssign
-    InterrogationSymbol(Tag, row, col),    // ?   expr?	Error propagation
-    MatchArm(Tag, row, col),               // =>	pat => expr	Part of match arm syntax
-    ShiftOp(Tag, row, col, ShiftDir),      // <<	<	expr << expr	Left-shift	Shl
-    StarSymbol(Tag, row, col),             // * 	expr * expr	Arithmetic multiplication	Mul
+    LogicalAnd(Tag, usize, usize),             // &&	expr && expr	Short-circuiting logical AND
+    LogicalOr(Tag, usize, usize),              // ||	expr || expr	Short-circuiting logical OR
+    BitwiseAnd(Tag, usize, usize),             // &	expr & expr	Bitwise AND	BitAnd
+    BitwiseOr(Tag, usize, usize),              // |	expr | expr	Bitwise OR	BitOr
+    BitwiseXor(Tag, usize, usize),             // ^	expr ^ expr	Bitwise exclusive OR	BitXor
+    BitwiseAndAssign(Tag, usize, usize),       // &=	expr & expr	Bitwise AND	BitAnd
+    BitwiseOrAssign(Tag, usize, usize),        // |=	var |= expr	Bitwise OR and assignment	BitOrAssign
+    BitwiseXorAssign(Tag, usize, usize),       // ^=	var ^= expr	Bitwise exclusive OR and assignment	BitXorAssign
+    InterrogationSymbol(Tag, usize, usize),    // ?   expr?	Error propagation
+    MatchArm(Tag, usize, usize),               // =>	pat => expr	Part of match arm syntax
+    ShiftOp(Tag, usize, usize, ShiftDir),      // <<	<	expr << expr	Left-shift	Shl
+    StarSymbol(Tag, usize, usize),             // * 	expr * expr	Arithmetic multiplication	Mul
                                            // *	*expr	Dereference	Deref
                                            // *	*const type, *mut type	Raw pointer
-    PlusSymbol(Tag, row, col),             // +	trait + trait, 'a + trait	Compound type constraint
+    PlusSymbol(Tag, usize, usize),             // +	trait + trait, 'a + trait	Compound type constraint
                                            // +	expr + expr	Arithmetic addition	Add
-    CommaSymbol(Tag, row, col),            // ,   expr, expr	Argument and element separator
-    MinusSymbol(Tag, row, col),            // - 	- expr	Arithmetic negation	Neg
+    CommaSymbol(Tag, usize, usize),            // ,   expr, expr	Argument and element separator
+    MinusSymbol(Tag, usize, usize),            // - 	- expr	Arithmetic negation	Neg
                                            // -	expr - expr	Arithmetic subtraction	Sub
-    ReturnType(Tag, row, col),             // ->	fn(...) -> type, |…| -> type	Function and closure return type
-    SglPtSymbol(Tag, row, col),            // .	expr.ident	Field access
+    ReturnType(Tag, usize, usize),             // ->	fn(...) -> type, |…| -> type	Function and closure return type
+    SglPtSymbol(Tag, usize, usize),            // .	expr.ident	Field access
                                            // .	expr.ident(expr, ...)	Method call
                                            // .	expr.0, expr.1, and so on	Tuple indexing
-    DblPtSymbol(Tag, row, col),            // ..	.., expr.., ..expr, expr..expr	Right-exclusive range literal	PartialOrd
+    DblPtSymbol(Tag, usize, usize),            // ..	.., expr.., ..expr, expr..expr	Right-exclusive range literal	PartialOrd
                                            // ..	..expr	Struct literal update syntax
                                            // ..	variant(x, ..), struct_type { x, .. }	“And the rest” pattern binding
-    InclusiveRange(Tag, row, col),         // ..=	..=expr, expr..=expr	Right-inclusive range literal	PartialOrd
-    AmpersandSymbol(Tag, row, col),        // &	&expr, &mut expr	Borrow
+    InclusiveRange(Tag, usize, usize),         // ..=	..=expr, expr..=expr	Right-inclusive range literal	PartialOrd
+    AmpersandSymbol(Tag, usize, usize),        // &	&expr, &mut expr	Borrow
                                            // &	&type, &mut type, &'a type, &'a mut type	Borrowed pointer type
                                            // &	expr & expr	Bitwise AND	BitAnd
-    SemicolonSymbol(Tag, row, col),        // ;	expr;	Statement and item terminator
+    SemicolonSymbol(Tag, usize, usize),        // ;	expr;	Statement and item terminator
                                            // ;	[...; len]	Part of fixed-size array syntax
-    EqualSymbol(Tag, row, col),            // =	var = expr, ident = type	Assignment/equivalence
-    Comparison(Tag, row, col, OrderOp),    // <	expr < expr	Less than comparison	PartialOrd
+    EqualSymbol(Tag, usize, usize),            // =	var = expr, ident = type	Assignment/equivalence
+    Comparison(Tag, usize, usize, OrderOp),    // <	expr < expr	Less than comparison	PartialOrd
                                            // >	expr > expr	Greater than comparison	PartialOrd
-    VerticalBarSymbol(Tag, row, col),      // |	pat | pat	Pattern alternatives
+    VerticalBarSymbol(Tag, usize, usize),      // |	pat | pat	Pattern alternatives
                                            // |	expr | expr	Bitwise OR	BitOr
-    AtSymbol(Tag, row, col),               // @	ident @ pat	Pattern binding
-    ColonSymbol(Tag, row, col),            // :	pat: type, ident: type	Constraints
+    AtSymbol(Tag, usize, usize),               // @	ident @ pat	Pattern binding
+    ColonSymbol(Tag, usize, usize),            // :	pat: type, ident: type	Constraints
                                            // :	ident: expr	Struct field initializer
                                            // :	'a: loop {...}	Loop label
+    Comment(Tag, usize, usize, CommentType, String),
 }
 
 pub trait Scanner {
     fn next_token(&mut self) -> Token;
 }
 
-pub struct Rust {
-    text: Vec<&str>,
+pub struct Rust<'a> {
+    text: Vec<&'a str>,
     current_row: usize,
     current_col: usize,
 }
 
-impl Rust {
-    pub fn new(text: &str) -> Self {
+impl<'a> Rust<'a> {
+    pub fn new(text: &'a str) -> Self {
         Rust {
-            text: texto.lines().collect(),
-            current_row = 0,
-            current_col = 0,
+            text: text.lines().collect(),
+            current_row: 0,
+            current_col: 0,
         }
     }
 
@@ -166,7 +188,7 @@ impl Rust {
     #[inline]
     fn current_char(&self) -> Option<char> {
         assert!(self.current_col <= self.text[self.current_row].chars().count());
-        
+
         if self.current_col >= self.text[self.current_row].chars().count() {
             return Some('\n');
         } else {
@@ -186,7 +208,7 @@ impl Rust {
     /// Volta uma posição com segurança (não vai abaixo de 0)
     fn retract(&mut self) {
         assert!(self.current_row + self.current_col > 0);
-        
+
         if self.current_col > 0 {
             self.current_col -= 1;
         } else {
@@ -196,7 +218,7 @@ impl Rust {
     }
 
     fn ignore_until_eol(&mut self) -> String {
-        let comment = String::new();
+        let mut comment = String::new();
         loop {
             match self.current_char() {
                 Some('\n') => {
@@ -208,15 +230,14 @@ impl Rust {
                 }
                 None => {
                     return comment;
-                    todo!();
                 }
             }
         }
     }
 
-    fn ignore_until_eob(&mut self) -> Return<String> {
+    fn ignore_until_eob(&mut self) -> Result<String, String> {
         let mut state = 0;
-        let mut text: String::new();
+        let mut text = String::new();
         let mut counter = 1;
 
         loop {
@@ -242,6 +263,9 @@ impl Rust {
                             state = 0;
                             continue;
                         }
+                        None => {
+                            todo!();
+                        }
                     }
                 }
                 1 => {
@@ -264,6 +288,9 @@ impl Rust {
                             self.advance();
                             state = 0;
                             continue;
+                        }
+                        None => {
+                            todo!();
                         }
                     }
                 }
@@ -292,14 +319,20 @@ impl Rust {
                             state = 0;
                             continue;
                         }
+                        None => {
+                            todo!();
+                        }
                     }
+                }
+                _ => {
+                    unreachable!();
                 }
             }
         }
     }
 }
 
-impl Scanner for Rust {
+impl<'a> Scanner for Rust<'a> {
     fn next_token(&mut self) -> Token {
         let mut state = 0;
         let mut lexema = String::new();
@@ -494,16 +527,16 @@ impl Scanner for Rust {
                 }
                 2 => {
                     self.retract(); // RETRACT
-                    return Token::Number(rust_tags::Tag::NUM, self.row, self.col, lexema);
+                    return Token::Integer(rust_tags::Tag::NUM, self.row(), self.col(), lexema, IntegerLiteralType::ISIZE);
                 }
                 7 => {
-                    return Token::LPar(Tag::LPAR, self.row, self.col);
+                    return Token::LPar(Tag::LPAR, self.row(), self.col());
                 }
                 8 => {
-                    return Token::RPar(Tag::RPAR, self.row, self.col);
+                    return Token::RPar(Tag::RPAR, self.row(), self.col());
                 }
                 9 => {
-                    return Token::EndMark(Tag::END, self.row, self.col);
+                    return Token::EndMark(Tag::END, self.row(), self.col());
                 }
                 10 => {
                     match self.current_char() {
@@ -536,18 +569,18 @@ impl Scanner for Rust {
                     self.retract();
 
                     if lexema == "_" {
-                        return Token::DefaultPattern(Tag::DEFAULT, self.row, self.col);
+                        return Token::DefaultPattern(Tag::DEFAULT, self.row(), self.col());
                     }
 
                     return match Tag::from_keyword(&lexema, keywords::KeywordContext::Normal) {
-                        Some(tag) => Token::Keyword(tag, self.row, self.col, lexema),
+                        Some(tag) => Token::Keyword(tag, self.row(), self.col(), lexema),
                         _ => match Tag::from_keyword(&lexema, keywords::KeywordContext::Future) {
-                                Some(tag) => Token::Keyword(tag, self.row, self.col, lexema),
+                                Some(tag) => Token::Keyword(tag, self.row(), self.col(), lexema),
                                 _ => match Tag::from_keyword(&lexema, keywords::KeywordContext::Lifetimes) {
-                                        Some(tag) => Token::Keyword(tag, self.row, self.col, lexema),
+                                        Some(tag) => Token::Keyword(tag, self.row(), self.col(), lexema),
                                         _ => match Tag::from_keyword(&lexema, keywords::KeywordContext::Union) {
-                                                Some(tag) => Token::Keyword(tag, self.row, self.col, lexema),
-                                                _ => Token::Identifier(Tag::IDENTIFIER, self.row, self.col, lexema),
+                                                Some(tag) => Token::Keyword(tag, self.row(), self.col(), lexema),
+                                                _ => Token::Identifier(Tag::IDENTIFIER, self.row(), self.col(), lexema),
                                             },
                                     },
                             }
@@ -555,7 +588,7 @@ impl Scanner for Rust {
                 }
                 12 => {
                     // Macro
-                    return Token::Identifier(Tag::IDENTIFIER, self.row, self.col, lexema);
+                    return Token::Identifier(Tag::IDENTIFIER, self.row(), self.col(), lexema);
                 }
 
                 100 => {
@@ -566,12 +599,12 @@ impl Scanner for Rust {
                             continue;
                         }
                         _  => {
-                            return Token::Not(Tag::NOT, self.row, self.col);
+                            return Token::Not(Tag::NOT, self.row(), self.col());
                         }
                     }
                 }
                 1001 => {
-                    return Token::Equality(Tag::EQUALITY, self.row, self.col, EqualityOp::NotEqual);
+                    return Token::Equality(Tag::EQUALITY, self.row(), self.col(), EqualityOp::NotEqual);
                 }
 
                 101 => {
@@ -582,12 +615,12 @@ impl Scanner for Rust {
                             continue;
                         }
                         _  => {
-                            return Token::Remainder(Tag::REM, self.row, self.col);
+                            return Token::Remainder(Tag::REM, self.row(), self.col());
                         }
                     }
                 }
                 1011 => {
-                    return Token::OpAssignment(Tag::OPASSIGN, self.row, self.col, AssignOp::RemAssign);
+                    return Token::OpAssignment(Tag::OPASSIGN, self.row(), self.col(), AssignOp::RemAssign);
                 }
 
                 102 => {
@@ -603,15 +636,15 @@ impl Scanner for Rust {
                             continue;
                         }
                         _  => {
-                            return Token::AmpersandSymbol(Tag::AMPERSAND, self.row, self.col);
+                            return Token::AmpersandSymbol(Tag::AMPERSAND, self.row(), self.col());
                         }
                     }
                 }
                 1021 => {
-                    return Token::OpAssignment(Tag::OPASSIGN, self.row, self.col, AssignOp::BitAndAssign);
+                    return Token::OpAssignment(Tag::OPASSIGN, self.row(), self.col(), AssignOp::BitAndAssign);
                 }
                 1022 => {
-                    return Token::LogicalAnd(Tag::AND, self.row, self.col);
+                    return Token::LogicalAnd(Tag::AND, self.row(), self.col());
                 }
 
                 103 => {
@@ -622,12 +655,12 @@ impl Scanner for Rust {
                             continue;
                         }
                         _  => {
-                            return Token::StarSymbol(Tag::STAR, self.row, self.col);
+                            return Token::StarSymbol(Tag::STAR, self.row(), self.col());
                         }
                     }
                 }
                 1031 => {
-                    return Token::OpAssignment(Tag::OPASSIGN, self.row, self.col, AssignOp::MulAssign);
+                    return Token::OpAssignment(Tag::OPASSIGN, self.row(), self.col(), AssignOp::MulAssign);
                 }
 
                 104 => {
@@ -638,16 +671,16 @@ impl Scanner for Rust {
                             continue;
                         }
                         _  => {
-                            return Token::PlusSymbol(Tag::PLUS, self.row, self.col);
+                            return Token::PlusSymbol(Tag::PLUS, self.row(), self.col());
                         }
                     }
                 }
                 1041 => {
-                    return Token::OpAssignment(Tag::OPASSIGN, self.row, self.col, AssignOp::AddAssign);
+                    return Token::OpAssignment(Tag::OPASSIGN, self.row(), self.col(), AssignOp::AddAssign);
                 }
 
                 105 => {
-                    return Token::CommaSymbol(Tag::COMMA, self.row, self.col);
+                    return Token::CommaSymbol(Tag::COMMA, self.row(), self.col());
                 }
 
                 106 => {
@@ -663,15 +696,15 @@ impl Scanner for Rust {
                             continue;
                         }
                         _  => {
-                            return Token::MinusSymbol(Tag::MINUS, self.row, self.col);
+                            return Token::MinusSymbol(Tag::MINUS, self.row(), self.col());
                         }
                     }
                 }
                 1061 => {
-                    return Token::OpAssignment(Tag::OPASSIGN, self.row, self.col, AssignOp::SubAssign);
+                    return Token::OpAssignment(Tag::OPASSIGN, self.row(), self.col(), AssignOp::SubAssign);
                 }
                 1062 => {
-                    return Token::ReturnType(Tag::ARROW, self.row, self.col);
+                    return Token::ReturnType(Tag::ARROW, self.row(), self.col());
                 }
 
                 107 => {
@@ -682,7 +715,7 @@ impl Scanner for Rust {
                             continue;
                         }
                         _  => {
-                            return Token::SglPtSymbol(Tag::SGLPT, self.row, self.col);
+                            return Token::SglPtSymbol(Tag::SGLPT, self.row(), self.col());
                         }
                     }
                 }
@@ -694,12 +727,12 @@ impl Scanner for Rust {
                             continue;
                         }
                         _  => {
-                            return Token::DblPtSymbol(Tag::DBLPT, self.row, self.col);
+                            return Token::DblPtSymbol(Tag::DBLPT, self.row(), self.col());
                         }
                     }
                 }
                 10711 => {
-                    return Token::InclusiveRange(Tag::INRANGE, self.row, self.col);
+                    return Token::InclusiveRange(Tag::INRANGE, self.row(), self.col());
                 }
 
                 108 => {
@@ -720,18 +753,18 @@ impl Scanner for Rust {
                             continue;
                         }
                         _  => {
-                            return Token::Division(Tag::DIV, self.row, self.col);
+                            return Token::Division(Tag::DIV, self.row(), self.col());
                         }
                     }
                 }
                 1081 => {
-                    return Token::OpAssignment(Tag::OPASSIGN, self.row, self.col, AssignOp::DivAssign);
+                    return Token::OpAssignment(Tag::OPASSIGN, self.row(), self.col(), AssignOp::DivAssign);
                 }
                 1082 => {
                     match self.current_char() {
                         Some('/') => {
                             self.advance();
-                            state = 1083
+                            state = 1083;
                             continue;
                         }
                         Some('!') => {
@@ -740,34 +773,34 @@ impl Scanner for Rust {
                             continue;
                         }
                         _  => {
-                            let text = self.ignore_rest_of_line();
-                            return Token::Comment(Tag::COMMENT, self.row, self.col, CommentType::Line, text);
+                            let text = self.ignore_until_eol();
+                            return Token::Comment(Tag::COMMENT, self.row(), self.col(), CommentType::Line, text);
                         }
                     }
                 }
                 1083 => {
                     let text = self.ignore_until_eol();
-                    return Token::Comment(Tag::COMMENT, self.row, self.col, CommentType::ExternalDoc, text);
+                    return Token::Comment(Tag::COMMENT, self.row(), self.col(), CommentType::ExtDoc, text);
                 }
                 1084 => {
                     let text = self.ignore_until_eol();
-                    return Token::Comment(Tag::COMMENT, self.row, self.col, CommentType::InternalDoc, text);
+                    return Token::Comment(Tag::COMMENT, self.row(), self.col(), CommentType::IntDoc, text);
                 }
                 1085 => {
-                    let text = self.ignore_until_eob();
-                    return Token::Comment(Tag::COMMENT, self.row, self.col, CommentType::Block, text);
+                    let text = self.ignore_until_eol();
+                    return Token::Comment(Tag::COMMENT, self.row(), self.col(), CommentType::Block, text);
                 }
 
                 109 => {
                     match self.current_char() {
                         _  => {
-                            return Token::ColonSymbol(Tag::COLON, self.row, self.col);
+                            return Token::ColonSymbol(Tag::COLON, self.row(), self.col());
                         }
                     }
                 }
 
                 110 => {
-                    return Token::SemicolonSymbol(Tag::SEMICOLON, self.row, self.col);
+                    return Token::SemicolonSymbol(Tag::SEMICOLON, self.row(), self.col());
                 }
 
                 111 => {
@@ -783,12 +816,12 @@ impl Scanner for Rust {
                             continue;
                         }
                         _  => {
-                            return Token::Comparison(Tag::LT, self.row, self.col, OrderOp::LT);
+                            return Token::Comparison(Tag::LT, self.row(), self.col(), OrderOp::LT);
                         }
                     }
                 }
                 1111 => {
-                    return Token::Comparison(Tag::LTE, self.row, self.col, OrderOp::LTE);
+                    return Token::Comparison(Tag::LTE, self.row(), self.col(), OrderOp::LTE);
                 }
                 1112 => {
                     match self.current_char() {
@@ -798,12 +831,12 @@ impl Scanner for Rust {
                             continue;
                         }
                         _  => {
-                            return Token::ShiftOp(Tag::SHIFTOP, self.row, self.col, ShiftDir::Left);
+                            return Token::ShiftOp(Tag::SHIFTOP, self.row(), self.col(), ShiftDir::Left);
                         }
                     }
                 }
                 11121 => {
-                    return Token::OpAssignment(Tag::OPASSIGN, self.row, self.col, AssignOp::ShlAssign);
+                    return Token::OpAssignment(Tag::OPASSIGN, self.row(), self.col(), AssignOp::ShlAssign);
                 }
 
                 112 => {
@@ -819,15 +852,15 @@ impl Scanner for Rust {
                             continue;
                         }
                         _  => {
-                            return Token::EqualSymbol(Tag::EQUAL, self.row, self.col);
+                            return Token::EqualSymbol(Tag::EQUAL, self.row(), self.col());
                         }
                     }
                 }
                 11211 => {
-                    return Token::Equality(Tag::EQUALITY, self.row, self.col, EqualityOp::Equal);
+                    return Token::Equality(Tag::EQUALITY, self.row(), self.col(), EqualityOp::Equal);
                 }
                 11212 => {
-                    return Token::MatchArm(Tag::MATCHARM, self.row, self.col);
+                    return Token::MatchArm(Tag::MATCHARM, self.row(), self.col());
                 }
 
                 113 => {
@@ -843,12 +876,12 @@ impl Scanner for Rust {
                             continue;
                         }
                         _  => {
-                            return Token::Comparison(Tag::GT, self.row, self.col, OrderOp::GT);
+                            return Token::Comparison(Tag::GT, self.row(), self.col(), OrderOp::GT);
                         }
                     }
                 }
                 1131 => {
-                    return Token::Comparison(Tag::GTE, self.row, self.col, OrderOp::GTE);
+                    return Token::Comparison(Tag::GTE, self.row(), self.col(), OrderOp::GTE);
                 }
                 1132 => {
                     match self.current_char() {
@@ -858,16 +891,16 @@ impl Scanner for Rust {
                             continue;
                         }
                         _  => {
-                            return Token::ShiftOp(Tag::SHIFTOP, self.row, self.col, ShiftDir::Right);
+                            return Token::ShiftOp(Tag::SHIFTOP, self.row(), self.col(), ShiftDir::Right);
                         }
                     }
                 }
                 11311 => {
-                    return Token::OpAssignment(Tag::OPASSIGN, self.row, self.col, AssignOp::ShrAssign);
+                    return Token::OpAssignment(Tag::OPASSIGN, self.row(), self.col(), AssignOp::ShrAssign);
                 }
 
                 114 => {
-                    return Token::AtSymbol(Tag::AT, self.row, self.col);
+                    return Token::AtSymbol(Tag::AT, self.row(), self.col());
                 }
 
                 115 => {
@@ -878,12 +911,12 @@ impl Scanner for Rust {
                             continue;
                         }
                         _  => {
-                            return Token::BitwiseXor(Tag::BITXOR, self.row, self.col);
+                            return Token::BitwiseXor(Tag::BITXOR, self.row(), self.col());
                         }
                     }
                 }
                 1151 => {
-                    return Token::OpAssignment(Tag::OPASSIGN, self.row, self.col, AssignOp::BitXorAssign);
+                    return Token::OpAssignment(Tag::OPASSIGN, self.row(), self.col(), AssignOp::BitXorAssign);
                 }
 
                 116 => {
@@ -899,25 +932,25 @@ impl Scanner for Rust {
                             continue;
                         }
                         _  => {
-                            return Token::VerticalBarSymbol(Tag::VBAR, self.row, self.col);
+                            return Token::VerticalBarSymbol(Tag::VBAR, self.row(), self.col());
                         }
                     }
                 }
                 1161 => {
-                    return Token::OpAssignment(Tag::OPASSIGN, self.row, self.col, AssignOp::BitOrAssign);
+                    return Token::OpAssignment(Tag::OPASSIGN, self.row(), self.col(), AssignOp::BitOrAssign);
                 }
                 1162 => {
-                    return Token::LogicalOr(Tag::OR, self.row, self.col);
+                    return Token::LogicalOr(Tag::OR, self.row(), self.col());
                 }
 
                 117 => {
-                    return Token::InterrogationSymbol(Tag::INTERROGATION, self.row, self.col);
+                    return Token::InterrogationSymbol(Tag::INTERROGATION, self.row(), self.col());
                 }
                 150 => {
                     let char = self.peek_char();
 
                     if char == None {
-                        return Token::Error(Tag::ERR, self.row, self.col, "Literal de caractere inválido".to_string());
+                        return Token::Error(Tag::ERR, self.row(), self.col(), "Literal de caractere inválido".to_string());
                     }
 
                     lexema.push(char.unwrap());
@@ -929,13 +962,13 @@ impl Scanner for Rust {
                             continue;
                         }
                         _ => {
-                            return Token::Error(Tag::ERR, self.row, self.col, "Literal de caractere inválido".to_string());
+                            return Token::Error(Tag::ERR, self.row(), self.col(), "Literal de caractere inválido".to_string());
                         }
                     }
                 }
 
                 1599 => {
-                    return Token::Character(Tag::CHARACTER, self.row, self.col, lexema.chars().nth(0).unwrap_or('\0'));
+                    return Token::Character(Tag::CHARACTER, self.row(), self.col(), lexema.chars().nth(0).unwrap_or('\0'));
                 }
 
                 160 => {
@@ -1029,7 +1062,7 @@ impl Scanner for Rust {
                             continue;
                         }
                         _ => {
-                            return Token::Error(Tag::ERR, self.row, self.col, "Identificador de byte inválido".to_string());
+                            return Token::Error(Tag::ERR, self.row(), self.col(), "Identificador de byte inválido".to_string());
                         }
                     }
                 }
@@ -1047,7 +1080,7 @@ impl Scanner for Rust {
                             continue;
                         }
                         _ => {
-                            return Token::Error(Tag::ERR, self.row, self.col, "Identificador de byte inválido".to_string());
+                            return Token::Error(Tag::ERR, self.row(), self.col(), "Identificador de byte inválido".to_string());
                         }
                     }
                 }
@@ -1093,7 +1126,7 @@ impl Scanner for Rust {
                             continue;
                         }
                         _ => {
-                            return Token::Error(Tag::ERR, self.row, self.col, "Literal de string inválido".to_string());
+                            return Token::Error(Tag::ERR, self.row(), self.col(), "Literal de string inválido".to_string());
                         }
                     }
                 }
@@ -1106,7 +1139,7 @@ impl Scanner for Rust {
                             continue;
                         }
                         _ => {
-                            return Token::Error(Tag::ERR, self.row, self.col, "Literal de string inválido".to_string());
+                            return Token::Error(Tag::ERR, self.row(), self.col(), "Literal de string inválido".to_string());
                         }
                     }
                 }
@@ -1137,7 +1170,7 @@ impl Scanner for Rust {
                             continue;
                         }
                         _ => {
-                            return Token::Error(Tag::ERR, self.row, self.col, "Literal de string inválido".to_string());
+                            return Token::Error(Tag::ERR, self.row(), self.col(), "Literal de string inválido".to_string());
                         }
                     }
                 }
@@ -1191,7 +1224,7 @@ impl Scanner for Rust {
                             continue;
                         }
                         _ => {
-                            return Token::Error(Tag::ERR, self.row, self.col, "Literal de string inválido".to_string());
+                            return Token::Error(Tag::ERR, self.row(), self.col(), "Literal de string inválido".to_string());
                         }
                     }
                 }
@@ -1204,7 +1237,7 @@ impl Scanner for Rust {
                             continue;
                         }
                         _ => {
-                            return Token::Error(Tag::ERR, self.row, self.col, "Literal de caractere inválido".to_string());
+                            return Token::Error(Tag::ERR, self.row(), self.col(), "Literal de caractere inválido".to_string());
                         }
                     }
                 }
@@ -1217,7 +1250,7 @@ impl Scanner for Rust {
                             continue;
                         }
                         _ => {
-                            return Token::Error(Tag::ERR, self.row, self.col, "Literal de caractere inválido".to_string());
+                            return Token::Error(Tag::ERR, self.row(), self.col(), "Literal de caractere inválido".to_string());
                         }
                     }
                 }
@@ -1235,7 +1268,7 @@ impl Scanner for Rust {
                             continue;
                         }
                         _ => {
-                            return Token::Error(Tag::ERR, self.row, self.col, "Literal de caractere inválido".to_string());
+                            return Token::Error(Tag::ERR, self.row(), self.col(), "Literal de caractere inválido".to_string());
                         }
                     }
                 }
@@ -1253,7 +1286,7 @@ impl Scanner for Rust {
                             continue;
                         }
                         _ => {
-                            return Token::Error(Tag::ERR, self.row, self.col, "Literal de caractere inválido".to_string());
+                            return Token::Error(Tag::ERR, self.row(), self.col(), "Literal de caractere inválido".to_string());
                         }
                     }
                 }
@@ -1271,7 +1304,7 @@ impl Scanner for Rust {
                             continue;
                         }
                         _ => {
-                            return Token::Error(Tag::ERR, self.row, self.col, "Literal de caractere inválido".to_string());
+                            return Token::Error(Tag::ERR, self.row(), self.col(), "Literal de caractere inválido".to_string());
                         }
                     }
                 }
@@ -1289,7 +1322,7 @@ impl Scanner for Rust {
                             continue;
                         }
                         _ => {
-                            return Token::Error(Tag::ERR, self.row, self.col, "Literal de caractere inválido".to_string());
+                            return Token::Error(Tag::ERR, self.row(), self.col(), "Literal de caractere inválido".to_string());
                         }
                     }
                 }
@@ -1307,7 +1340,7 @@ impl Scanner for Rust {
                             continue;
                         }
                         _ => {
-                            return Token::Error(Tag::ERR, self.row, self.col, "Literal de caractere inválido".to_string());
+                            return Token::Error(Tag::ERR, self.row(), self.col(), "Literal de caractere inválido".to_string());
                         }
                     }
                 }
@@ -1319,7 +1352,7 @@ impl Scanner for Rust {
                             continue;
                         }
                         _ => {
-                            return Token::Error(Tag::ERR, self.row, self.col, "Literal de caractere inválido".to_string());
+                            return Token::Error(Tag::ERR, self.row(), self.col(), "Literal de caractere inválido".to_string());
                         }
                     }
                 }
@@ -1361,9 +1394,9 @@ impl Scanner for Rust {
                 1681 => {
                     self.retract();
                     if counter == 0 {
-                        return Token::StringLiteral(Tag::STRING, self.row, self.col, string_type, lexema);
+                        return Token::StringLiteral(Tag::STRING, self.row(), self.col(), string_type, lexema);
                     }
-                    return Token::Error(Tag::ERR, self.row, self.col, "Literal de string inválido".to_string());
+                    return Token::Error(Tag::ERR, self.row(), self.col(), "Literal de string inválido".to_string());
                 }
                 1690 => {
                     todo!();
@@ -1371,10 +1404,10 @@ impl Scanner for Rust {
 
                 999 => {
                     self.retract();
-                    return Token::Error(Tag::ERR, self.row, self.col, format!("Caracter inválido: {}", lexema));
+                    return Token::Error(Tag::ERR, self.row(), self.col(), format!("Caracter inválido: {}", lexema));
                 }
                 _ => {
-                    return Token::Error(Tag::ERR, self.row, self.col, "Caracter inválido".to_string());
+                    return Token::Error(Tag::ERR, self.row(), self.col(), "Caracter inválido".to_string());
                 }
             }
         }
@@ -1382,12 +1415,12 @@ impl Scanner for Rust {
 
 }
 
-impl Rust {
+impl Rust<'_> {
     fn peek_char(&mut self) -> Option<char> {
         let mut state = 0;
         let mut lexema = String::new();
         let mut auxiliary = String::new();
-        let position = self.get_position();
+        let mut position = self.get_position();
 
         loop {
             match state {
@@ -1621,6 +1654,268 @@ impl Rust {
                 }
                 12 => {
                     return lexema.chars().nth(0);
+                }
+                _ => {
+                    self.set_position(position);
+                    return None;
+                }
+            }
+        }
+    }
+
+    pub fn peek_number(&mut self) -> Token {
+        let mut state = 0;
+        let mut lexema = String::new();
+
+        loop {
+            match state {
+                0 => {
+                    match self.current_char() {
+                        Some('0') => {
+                            lexema.push('0');
+                            self.advance();
+                            state = 1;
+                            continue;
+                        }
+                        Some('.') => {
+                            lexema.push('0');
+                            self.advance();
+                            state = 1;
+                            continue;
+                        }
+                        Some(c) if c.is_digit(10) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 1;
+                            continue;
+                        }
+                        _ => {
+                            return Token::Error(Tag::ERR, self.row(), self.col(), "Literal numérico inválido".to_string());
+                        }
+                    }
+                }
+                1 => {
+                    match self.current_char() {
+                        Some('b') | Some('B') => {
+                            self.advance();
+                            state = 3;
+                            continue;
+                        }
+                        Some('o') | Some('O') => {
+                            self.advance();
+                            state = 4;
+                            continue;
+                        }
+                        Some('x') | Some('X') => {
+                            self.advance();
+                            state = 5;
+                            continue;
+                        }
+                        Some('_') => {
+                            self.advance();
+                            state = 25;
+                            continue;
+                        }
+                        Some(c) if c.is_digit(10) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 25;
+                            continue;
+                        }
+                        _ => {
+                            self.advance();
+                            state = 26;
+                            continue;
+                        }
+                    }
+                }
+                3 => {
+                    
+                }
+                4 => {
+                    
+                }
+                5 => {
+                    
+                }
+                6 => {
+                    
+                }
+                7 => {
+                    match self.current_char() {
+                        Some(c) if c.is_digit(10) || c == '_' => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 35;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
+                }
+                8 => {
+                    
+                }
+                9 => {
+                    
+                }
+                10 => {
+                    
+                }
+                11 => {
+                    
+                }
+                12 => {
+                    
+                }
+                13 => {
+                    
+                }
+                14 => {
+                    
+                }
+                15 => {
+                    
+                }
+                16 => {
+                    
+                }
+                17 => {
+                    
+                }
+                18 => {
+                    
+                }
+                19 => {
+                    
+                }
+                21 => {
+                    
+                }
+                22 => {
+                    
+                }
+                23 => {
+                    
+                }
+                24 => {
+                    
+                }
+                25 => {
+                    
+                }
+                26 => {
+                    self.retract();
+                    return Token::Integer(Tag::NUM, self.row(), self.col(), lexema, IntegerLiteralType::Decimal);
+                }
+                27 => {
+                    self.retract();
+                }
+                28 => {
+                    self.retract();
+                }
+                29 => {
+                    self.retract();
+                }
+                30 => {
+                    self.retract();
+                }
+                31 => {
+                    self.retract();
+                    return Token::Integer(Tag::NUM, self.row(), self.col(), lexema, IntegerLiteralType::Decimal);
+                }
+                32 => {
+                    
+                }
+                33 => {
+                    
+                }
+                34 => {
+                    
+                }
+                35 => {
+                    match self.current_char() {
+                        Some(c) if c.is_digit(10) | Some('_') => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 35;
+                            continue;
+                        }
+                        Some('f') | Some('F') => {
+                            lexema.push('f');
+                            self.advance();
+                            state = 36;
+                            continue;
+                        }
+                        Some('e') | Some('E') => {
+                            lexema.push('f');
+                            self.advance();
+                            state = 32;
+                            continue;
+                        }
+                        _ => {
+                            self.advance();
+                            state = 31;
+                            continue;
+                        }
+                    }
+                }
+                36 => {
+                    match self.current_char() {
+                        Some('3') => {
+                            lexema.push('3');
+                            self.advance();
+                            state = 37;
+                            continue;
+                        }
+                        Some('6') => {
+                            lexema.push('6');
+                            self.advance();
+                            state = 39;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
+                }
+                37 => {
+                    match self.current_char() {
+                        Some('2') => {
+                            lexema.push('2');
+                            self.advance();
+                            state = 38;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
+                }
+                38 => {
+                    // f32
+                    return Token::Float(Tag::FLOAT, self.row(), self.col(), lexema, FloatLiteralType::F32);
+                }
+                39 => {
+                    match self.current_char() {
+                        Some('4') => {
+                            lexema.push('4');
+                            self.advance();
+                            state = 40;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
+                }
+                40 => {
+                    // f64
+                    return Token::Float(Tag::FLOAT, self.row(), self.col(), lexema, FloatLiteralType::F64);
+                }
+                41 => {
+                    self.retract();
                 }
                 _ => {
                     self.set_position(position);
