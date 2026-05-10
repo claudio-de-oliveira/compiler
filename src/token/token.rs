@@ -70,11 +70,13 @@ pub enum IntegerLiteralType {
     I16,
     I32,
     I64,
+    I128,
     ISIZE,
     U8,
     U16,
     U32,
     U64,
+    U128,
     USIZE,
 }
 
@@ -527,7 +529,7 @@ impl<'a> Scanner for Rust<'a> {
                 }
                 2 => {
                     self.retract(); // RETRACT
-                    return Token::Integer(rust_tags::Tag::NUM, self.row(), self.col(), lexema, IntegerLiteralType::ISIZE);
+                    return Token::Integer(rust_tags::Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::ISIZE);
                 }
                 7 => {
                     return Token::LPar(Tag::LPAR, self.row(), self.col());
@@ -1666,6 +1668,7 @@ impl Rust<'_> {
     pub fn peek_number(&mut self) -> Token {
         let mut state = 0;
         let mut lexema = String::new();
+        let mut signed = true;
 
         loop {
             match state {
@@ -1680,44 +1683,66 @@ impl Rust<'_> {
                         Some('.') => {
                             lexema.push('0');
                             self.advance();
-                            state = 1;
-                            continue;
-                        }
-                        Some(c) if c.is_digit(10) => {
-                            lexema.push(c);
-                            self.advance();
-                            state = 1;
+                            state = 7;
                             continue;
                         }
                         _ => {
-                            return Token::Error(Tag::ERR, self.row(), self.col(), "Literal numérico inválido".to_string());
+                            self.advance();
+                            state = 25;
+                            continue;
                         }
                     }
                 }
                 1 => {
                     match self.current_char() {
+                        Some('.') => {
+                            lexema.push('0');
+                            self.advance();
+                            state = 7;
+                            continue;
+                        }
+                        Some('i') => {
+                            signed = true;
+                            self.advance();
+                            state = 9;
+                            continue;
+                        }
+                        Some('u') => {
+                            signed = false;
+                            self.advance();
+                            state = 9;
+                            continue;
+                        }
+                        Some('f') => {
+                            self.advance();
+                            state = 36;
+                            continue;
+                        }
                         Some('b') | Some('B') => {
+                            lexema.clear();
                             self.advance();
                             state = 3;
                             continue;
                         }
                         Some('o') | Some('O') => {
+                            lexema.clear();
                             self.advance();
                             state = 4;
                             continue;
                         }
                         Some('x') | Some('X') => {
+                            lexema.clear();
                             self.advance();
                             state = 5;
                             continue;
                         }
-                        Some('_') => {
+                        Some(c) if c.is_digit(10) => {
+                            lexema.push(c);
                             self.advance();
                             state = 25;
                             continue;
                         }
-                        Some(c) if c.is_digit(10) => {
-                            lexema.push(c);
+                        Some('_') => {
                             self.advance();
                             state = 25;
                             continue;
@@ -1730,21 +1755,71 @@ impl Rust<'_> {
                     }
                 }
                 3 => {
-                    
+                    match self.current_char() {
+                        Some(c) if c.is_digit(2) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 8;
+                            continue;
+                        }
+                        Some('_') => {
+                            self.advance();
+                            state = 8;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
                 }
                 4 => {
-                    
+                    match self.current_char() {
+                        Some(c) if c.is_digit(8) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 23;
+                            continue;
+                        }
+                        Some('_') => {
+                            self.advance();
+                            state = 23;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
                 }
                 5 => {
-                    
+                    match self.current_char() {
+                        Some(c) if c.is_digit(16) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 24;
+                            continue;
+                        }
+                        Some('_') => {
+                            self.advance();
+                            state = 24;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
                 }
                 6 => {
-                    
+
                 }
                 7 => {
                     match self.current_char() {
-                        Some(c) if c.is_digit(10) || c == '_' => {
+                        Some(c) if c.is_digit(10) => {
                             lexema.push(c);
+                            self.advance();
+                            state = 35;
+                            continue;
+                        }
+                        Some('_') => {
                             self.advance();
                             state = 35;
                             continue;
@@ -1755,94 +1830,410 @@ impl Rust<'_> {
                     }
                 }
                 8 => {
-                    
+                    match self.current_char() {
+                        Some('_') => {
+                            self.advance();
+                            state = 8;
+                            continue;
+                        }
+                        Some(c) if c.is_digit(2) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 8;
+                            continue;
+                        }
+                        Some('i') => {
+                            signed = true;
+                            self.advance();
+                            state = 9;
+                            continue;
+                        }
+                        Some('u') => {
+                            signed = false;
+                            self.advance();
+                            state = 9;
+                            continue;
+                        }
+                        _ => {
+                            state = 27;
+                            self.advance();
+                            continue;
+                        }
+                    }
                 }
                 9 => {
-                    
+                    match self.current_char() {
+                        Some('1') => {
+                            self.advance();
+                            state = 11;
+                            continue;
+                        }
+                        Some('3') => {
+                            self.advance();
+                            state = 15;
+                            continue;
+                        }
+                        Some('6') => {
+                            self.advance();
+                            state = 17;
+                            continue;
+                        }
+                        Some('8') => {
+                            self.advance();
+                            state = 10;
+                            continue;
+                        }
+                        Some('s') => {
+                            self.advance();
+                            state = 19;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
                 }
                 10 => {
-                    
+                    // u8, i8
+                    if signed {
+                        return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::I8);
+                    } else {
+                        return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::U8);
+                    }
                 }
                 11 => {
-                    
+                    match self.current_char() {
+                        Some('2') => {
+                            self.advance();
+                            state = 13;
+                            continue;
+                        }
+                        Some('6') => {
+                            self.advance();
+                            state = 12;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
                 }
                 12 => {
-                    
+                    // u16, i16
+                    if signed {
+                        return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::I16);
+                    } else {
+                        return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::U16);
+                    }
                 }
                 13 => {
-                    
+                    match self.current_char() {
+                        Some('8') => {
+                            self.advance();
+                            state = 14;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
                 }
                 14 => {
-                    
+                    // u128, i128
+                    if signed {
+                        return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::I128);
+                    } else {
+                        return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::U128);
+                    }
                 }
                 15 => {
-                    
+                    match self.current_char() {
+                        Some('2') => {
+                            self.advance();
+                            state = 16;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
                 }
                 16 => {
-                    
+                    // u32, i32
+                    if signed {
+                        return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::I32);
+                    } else {
+                        return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::U32);
+                    }
                 }
                 17 => {
-                    
+                    match self.current_char() {
+                        Some('4') => {
+                            self.advance();
+                            state = 18;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
                 }
                 18 => {
-                    
+                    // u64, i64
+                    if signed {
+                        return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::I64);
+                    } else {
+                        return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::U64);
+                    }
                 }
                 19 => {
-                    
+                    match self.current_char() {
+                        Some('i') => {
+                            self.advance();
+                            state = 20;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
+                }
+                20 => {
+                    match self.current_char() {
+                        Some('z') => {
+                            self.advance();
+                            state = 21;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
                 }
                 21 => {
-                    
+                    match self.current_char() {
+                        Some('e') => {
+                            self.advance();
+                            state = 22;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
                 }
                 22 => {
-                    
+                    // usize, isize
+                    if signed {
+                        return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::ISIZE);
+                    } else {
+                        return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::USIZE);
+                    }
                 }
                 23 => {
-                    
+                    match self.current_char() {
+                        Some(c) if c.is_digit(8) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 23;
+                            continue;
+                        }
+                        Some('_') => {
+                            self.advance();
+                            state = 23;
+                            continue;
+                        }
+                        Some('i') => {
+                            signed = true;
+                            self.advance();
+                            state = 9;
+                            continue;
+                        }
+                        Some('u') => {
+                            signed = false;
+                            self.advance();
+                            state = 9;
+                            continue;
+                        }
+                        _ => {
+                            self.advance();
+                            state = 28;
+                            continue;
+                        }
+                    }
                 }
                 24 => {
-                    
+                    match self.current_char() {
+                        Some(c) if c.is_digit(16) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 24;
+                            continue;
+                        }
+                        Some('_') => {
+                            self.advance();
+                            state = 24;
+                            continue;
+                        }
+                        Some('i') => {
+                            signed = true;
+                            self.advance();
+                            state = 9;
+                            continue;
+                        }
+                        Some('u') => {
+                            signed = false;
+                            self.advance();
+                            state = 9;
+                            continue;
+                        }
+                        _ => {
+                            self.advance();
+                            state = 29;
+                            continue;
+                        }
+                    }
                 }
                 25 => {
-                    
-                }
-                26 => {
-                    self.retract();
-                    return Token::Integer(Tag::NUM, self.row(), self.col(), lexema, IntegerLiteralType::Decimal);
+                    match self.current_char() {
+                        Some('.') => {
+                            lexema.push('.');
+                            self.advance();
+                            state = 35;
+                            continue;
+                        }
+                        Some(c) if c.is_digit(10) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 25;
+                            continue;
+                        }
+                        Some('_') => {
+                            self.advance();
+                            state = 25;
+                            continue;
+                        }
+                        Some('e') | Some('E') => {
+                            signed = true;
+                            self.advance();
+                            state = 32;
+                            continue;
+                        }
+                        Some('i') => {
+                            signed = true;
+                            self.advance();
+                            state = 9;
+                            continue;
+                        }
+                        Some('u') => {
+                            signed = false;
+                            self.advance();
+                            state = 9;
+                            continue;
+                        }
+                        _ => {
+                            self.advance();
+                            state = 30;
+                            continue;
+                        }
+                    }
                 }
                 27 => {
                     self.retract();
+                    //todo!("Converter binário para inteiro");
+                    return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::ISIZE);
                 }
                 28 => {
                     self.retract();
+                    //todo!("Converter octal para inteiro");
+                    return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::ISIZE);
                 }
                 29 => {
                     self.retract();
+                    //todo!("Converter hexa para inteiro");
+                    return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::ISIZE);
                 }
                 30 => {
                     self.retract();
                 }
                 31 => {
                     self.retract();
-                    return Token::Integer(Tag::NUM, self.row(), self.col(), lexema, IntegerLiteralType::Decimal);
+                    return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::ISIZE);
                 }
                 32 => {
-                    
+                    match self.current_char() {
+                        Some(c) if c.is_digit(10) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 34;
+                            continue;
+                        }
+                        Some('+') => {
+                            lexema.push('+');
+                            self.advance();
+                            state = 33;
+                            continue;
+                        }
+                        Some('-') => {
+                            lexema.push('-');
+                            self.advance();
+                            state = 33;
+                            continue;
+                        }
+                        _ => {
+                            self.advance();
+                            state = 30;
+                            continue;
+                        }
+                    }
                 }
                 33 => {
-                    
+                    match self.current_char() {
+                        Some(c) if c.is_digit(10) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 25;
+                            continue;
+                        }
+                        Some('_') => {
+                            self.advance();
+                            state = 25;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
                 }
                 34 => {
-                    
+                    match self.current_char() {
+                        Some(c) if c.is_digit(10) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 34;
+                            continue;
+                        }
+                        _ => {
+                            self.advance();
+                            state = 40;
+                            continue;
+                        }
+                    }
                 }
                 35 => {
                     match self.current_char() {
-                        Some(c) if c.is_digit(10) | Some('_') => {
+                        Some(c) if c.is_digit(10) => {
                             lexema.push(c);
                             self.advance();
                             state = 35;
                             continue;
                         }
-                        Some('f') | Some('F') => {
+                        Some('_') => {
+                            self.advance();
+                            state = 35;
+                            continue;
+                        }
+                        Some('f') => {
                             lexema.push('f');
                             self.advance();
                             state = 36;
@@ -1916,10 +2307,10 @@ impl Rust<'_> {
                 }
                 41 => {
                     self.retract();
+                    return Token::Float(Tag::FLOAT, self.row(), self.col(), lexema, FloatLiteralType::F64);
                 }
                 _ => {
-                    self.set_position(position);
-                    return None;
+                    return Token::Error(Tag::ERR, self.row(), self.col(), format!("Número mal formado: {}", lexema));
                 }
             }
         }

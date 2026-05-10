@@ -68,7 +68,7 @@ pub enum Tag {
     UNION = R!(51),
     STATICLT = R!(52),
     //
-    NUM = T!(53),
+    INTEGER = T!(53),
     LPAR = T!(54),
     RPAR = T!(55),
     END = T!(56),
@@ -107,6 +107,7 @@ pub enum Tag {
     ERR = T!(89),
     CHARACTER = T!(90),
     STRING = T!(91),
+    FLOAT = T!(92),
 
     COMMENT = T!(9999),
 }
