@@ -528,7 +528,7 @@ impl<'a> Scanner for Rust<'a> {
                     }
                 }
                 2 => {
-                    self.retract(); // RETRACT
+                    self.retract();
                     return Token::Integer(rust_tags::Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::ISIZE);
                 }
                 7 => {
@@ -1680,25 +1680,36 @@ impl Rust<'_> {
                             state = 1;
                             continue;
                         }
-                        Some('.') => {
-                            lexema.push('0');
-                            self.advance();
-                            state = 7;
-                            continue;
-                        }
-                        _ => {
+                        Some(c) if c.is_digit(10) => {
+                            lexema.push(c);
                             self.advance();
                             state = 25;
                             continue;
+                        }
+                        // Conferir se pode começar com um ponto
+                        // Some('.') => {
+                        //     lexema.push('0');
+                        //     self.advance();
+                        //     state = 7;
+                        //     continue;
+                        // }
+                        _ => {
+                            unreachable!();
                         }
                     }
                 }
                 1 => {
                     match self.current_char() {
                         Some('.') => {
-                            lexema.push('0');
+                            lexema.push('.');
                             self.advance();
                             state = 7;
+                            continue;
+                        }
+                        Some('e') || Some('E') => {
+                            lexema.push('e');
+                            self.advance();
+                            state = 32;
                             continue;
                         }
                         Some('i') => {
@@ -1753,6 +1764,9 @@ impl Rust<'_> {
                             continue;
                         }
                     }
+                }
+                2 => {
+                    unreachable!();
                 }
                 3 => {
                     match self.current_char() {
@@ -1809,7 +1823,7 @@ impl Rust<'_> {
                     }
                 }
                 6 => {
-
+                    unreachable!();
                 }
                 7 => {
                     match self.current_char() {
@@ -2114,7 +2128,7 @@ impl Rust<'_> {
                             continue;
                         }
                         Some('e') | Some('E') => {
-                            signed = true;
+                            lexema.push(c);
                             self.advance();
                             state = 32;
                             continue;
@@ -2138,6 +2152,10 @@ impl Rust<'_> {
                         }
                     }
                 }
+                26 => {
+                    self.retract();
+                    return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::ISIZE);
+                }
                 27 => {
                     self.retract();
                     //todo!("Converter binário para inteiro");
@@ -2155,6 +2173,8 @@ impl Rust<'_> {
                 }
                 30 => {
                     self.retract();
+                    //todo!("Converter decimal para inteiro");
+                    return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::ISIZE);
                 }
                 31 => {
                     self.retract();
@@ -2181,9 +2201,7 @@ impl Rust<'_> {
                             continue;
                         }
                         _ => {
-                            self.advance();
-                            state = 30;
-                            continue;
+                            todo!("Terra");
                         }
                     }
                 }
@@ -2192,12 +2210,12 @@ impl Rust<'_> {
                         Some(c) if c.is_digit(10) => {
                             lexema.push(c);
                             self.advance();
-                            state = 25;
+                            state = 34;
                             continue;
                         }
                         Some('_') => {
                             self.advance();
-                            state = 25;
+                            state = 34;
                             continue;
                         }
                         _ => {
@@ -2207,15 +2225,25 @@ impl Rust<'_> {
                 }
                 34 => {
                     match self.current_char() {
-                        Some(c) if c.is_digit(10) => {
+                        Some(c) if c.is_digit(10)  => {
                             lexema.push(c);
                             self.advance();
                             state = 34;
                             continue;
                         }
+                        Some('_') => {
+                            self.advance();
+                            state = 34;
+                            continue;
+                        }
+                        Some('f') => {
+                            self.advance();
+                            state = 36;
+                            continue;
+                        }
                         _ => {
                             self.advance();
-                            state = 40;
+                            state = 41;
                             continue;
                         }
                     }
@@ -2309,6 +2337,21 @@ impl Rust<'_> {
                     self.retract();
                     return Token::Float(Tag::FLOAT, self.row(), self.col(), lexema, FloatLiteralType::F64);
                 }
+                42 => {
+                    match self.current_char() {
+                        Some('f') => {
+                            self.advance();
+                            state = 36;
+                            continue;
+                        }
+                        _ => {
+                            self.advance();
+                            state = 40;
+                            continue;
+                        }
+                    }
+                }
+
                 _ => {
                     return Token::Error(Tag::ERR, self.row(), self.col(), format!("Número mal formado: {}", lexema));
                 }
