@@ -104,17 +104,17 @@ pub enum Token {
     Division(Tag, usize, usize),               // /	expr / expr	Arithmetic division	Div
     Not(Tag, usize, usize),                    // !	!expr	Bitwise or logical complement	Not
     Equality(Tag, usize, usize, EqualityOp),   // !=	expr != expr	Nonequality comparison	PartialEq
-                                           // ==	expr == expr	Equality comparison	PartialEq
+                                               // ==	expr == expr	Equality comparison	PartialEq
     Remainder(Tag, usize, usize),              // %	expr % expr	Arithmetic remainder	Rem
     Assignment(Tag, usize, usize),             // =	var = expr, ident = type	Assignment/equivalence
     OpAssignment(Tag, usize, usize, AssignOp), // %=	var %= expr	Arithmetic remainder and assignment	RemAssign
-                                           // &=	var &= expr	Bitwise AND and assignment	BitAndAssign
-                                           // *=	var *= expr	Arithmetic multiplication and assignment	MulAssign
-                                           // /=	var /= expr	Arithmetic divisionn and assignment	DivAssign
-                                           // +=	var += expr	Arithmetic addition and assignment	AddAssign
-                                           // -=	var -= expr	Arithmetic subtraction and assignment	SubAssign
-                                           // <<=	var <<= expr	Left-shift and assignment	ShlAssign
-                                           // >>=	var >>= expr	Right-shift and assignment	ShrAssign
+                                               // &=	var &= expr	Bitwise AND and assignment	BitAndAssign
+                                               // *=	var *= expr	Arithmetic multiplication and assignment	MulAssign
+                                               // /=	var /= expr	Arithmetic divisionn and assignment	DivAssign
+                                               // +=	var += expr	Arithmetic addition and assignment	AddAssign
+                                               // -=	var -= expr	Arithmetic subtraction and assignment	SubAssign
+                                               // <<=	var <<= expr	Left-shift and assignment	ShlAssign
+                                               // >>=	var >>= expr	Right-shift and assignment	ShrAssign
     LogicalAnd(Tag, usize, usize),             // &&	expr && expr	Short-circuiting logical AND
     LogicalOr(Tag, usize, usize),              // ||	expr || expr	Short-circuiting logical OR
     BitwiseAnd(Tag, usize, usize),             // &	expr & expr	Bitwise AND	BitAnd
@@ -127,35 +127,35 @@ pub enum Token {
     MatchArm(Tag, usize, usize),               // =>	pat => expr	Part of match arm syntax
     ShiftOp(Tag, usize, usize, ShiftDir),      // <<	<	expr << expr	Left-shift	Shl
     StarSymbol(Tag, usize, usize),             // * 	expr * expr	Arithmetic multiplication	Mul
-                                           // *	*expr	Dereference	Deref
-                                           // *	*const type, *mut type	Raw pointer
+                                               // *	*expr	Dereference	Deref
+                                               // *	*const type, *mut type	Raw pointer
     PlusSymbol(Tag, usize, usize),             // +	trait + trait, 'a + trait	Compound type constraint
-                                           // +	expr + expr	Arithmetic addition	Add
+                                               // +	expr + expr	Arithmetic addition	Add
     CommaSymbol(Tag, usize, usize),            // ,   expr, expr	Argument and element separator
     MinusSymbol(Tag, usize, usize),            // - 	- expr	Arithmetic negation	Neg
-                                           // -	expr - expr	Arithmetic subtraction	Sub
+                                               // -	expr - expr	Arithmetic subtraction	Sub
     ReturnType(Tag, usize, usize),             // ->	fn(...) -> type, |…| -> type	Function and closure return type
     SglPtSymbol(Tag, usize, usize),            // .	expr.ident	Field access
-                                           // .	expr.ident(expr, ...)	Method call
-                                           // .	expr.0, expr.1, and so on	Tuple indexing
+                                               // .	expr.ident(expr, ...)	Method call
+                                               // .	expr.0, expr.1, and so on	Tuple indexing
     DblPtSymbol(Tag, usize, usize),            // ..	.., expr.., ..expr, expr..expr	Right-exclusive range literal	PartialOrd
-                                           // ..	..expr	Struct literal update syntax
-                                           // ..	variant(x, ..), struct_type { x, .. }	“And the rest” pattern binding
+                                               // ..	..expr	Struct literal update syntax
+                                               // ..	variant(x, ..), struct_type { x, .. }	“And the rest” pattern binding
     InclusiveRange(Tag, usize, usize),         // ..=	..=expr, expr..=expr	Right-inclusive range literal	PartialOrd
     AmpersandSymbol(Tag, usize, usize),        // &	&expr, &mut expr	Borrow
-                                           // &	&type, &mut type, &'a type, &'a mut type	Borrowed pointer type
-                                           // &	expr & expr	Bitwise AND	BitAnd
+                                               // &	&type, &mut type, &'a type, &'a mut type	Borrowed pointer type
+                                               // &	expr & expr	Bitwise AND	BitAnd
     SemicolonSymbol(Tag, usize, usize),        // ;	expr;	Statement and item terminator
-                                           // ;	[...; len]	Part of fixed-size array syntax
+                                               // ;	[...; len]	Part of fixed-size array syntax
     EqualSymbol(Tag, usize, usize),            // =	var = expr, ident = type	Assignment/equivalence
     Comparison(Tag, usize, usize, OrderOp),    // <	expr < expr	Less than comparison	PartialOrd
-                                           // >	expr > expr	Greater than comparison	PartialOrd
+                                               // >	expr > expr	Greater than comparison	PartialOrd
     VerticalBarSymbol(Tag, usize, usize),      // |	pat | pat	Pattern alternatives
-                                           // |	expr | expr	Bitwise OR	BitOr
+                                               // |	expr | expr	Bitwise OR	BitOr
     AtSymbol(Tag, usize, usize),               // @	ident @ pat	Pattern binding
     ColonSymbol(Tag, usize, usize),            // :	pat: type, ident: type	Constraints
-                                           // :	ident: expr	Struct field initializer
-                                           // :	'a: loop {...}	Loop label
+                                               // :	ident: expr	Struct field initializer
+                                               // :	'a: loop {...}	Loop label
     Comment(Tag, usize, usize, CommentType, String),
 }
 
@@ -1706,7 +1706,7 @@ impl Rust<'_> {
                             state = 7;
                             continue;
                         }
-                        Some('e') || Some('E') => {
+                        Some('e') | Some('E') => {
                             lexema.push('e');
                             self.advance();
                             state = 32;
