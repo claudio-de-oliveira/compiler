@@ -35,7 +35,10 @@ mod tests {
         let token = expr.next_token();        assert_eq!(token.get_tag(), Tag::COLON);
         let token = expr.next_token();        assert_eq!(token.get_tag(), Tag::DEFAULT);
         //
-        let token = expr.next_token();        assert_eq!(token.get_assign_op(), Some(AssignOp::AddAssign));
+        match expr.next_token() {
+            Token::OpAssignment(_, _, _, assign_op) => assert_eq!(assign_op, AssignOp::AddAssign),
+            _ => panic!("Esperava OpAssignment, mas recebeu algo diferente"),
+        };
         let token = expr.next_token();        assert_eq!(token.get_assign_op(), Some(AssignOp::BitAndAssign));
         let token = expr.next_token();        assert_eq!(token.get_assign_op(), Some(AssignOp::BitXorAssign));
         let token = expr.next_token();        assert_eq!(token.get_assign_op(), Some(AssignOp::BitOrAssign));

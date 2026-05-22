@@ -159,6 +159,57 @@ pub enum Token {
     Comment(Tag, usize, usize, CommentType, String),
 }
 
+impl Token {
+    pub fn get_tag(&self) -> Tag {
+        match self {
+            Token::Keyword(tag, _, _, _) => *tag,
+            Token::Identifier(tag, _, _, _) => *tag,
+            Token::Character(tag, _, _, _) => *tag,
+            Token::StringLiteral(tag, _, _, _, _) => *tag,
+            Token::Integer(tag, _, _, _, _) => *tag,
+            Token::Float(tag, _, _, _, _) => *tag,
+            Token::LPar(tag, _, _) => *tag,
+            Token::RPar(tag, _, _) => *tag,
+            Token::EndMark(tag, _, _) => *tag,
+            Token::Error(tag, _, _, _) => *tag,
+            Token::DefaultPattern(tag, _, _) => *tag,
+            Token::Division(tag, _, _) => *tag,
+            Token::Not(tag, _, _) => *tag,
+            Token::Equality(tag, _, _, _) => *tag,
+            Token::Remainder(tag, _, _) => *tag,
+            Token::Assignment(tag, _, _) => *tag,
+            Token::OpAssignment(tag, _, _, _) => *tag,
+            Token::LogicalAnd(tag, _, _) => *tag,
+            Token::LogicalOr(tag, _, _) => *tag,
+            Token::BitwiseAnd(tag, _, _) => *tag,
+            Token::BitwiseOr(tag, _, _) => *tag,
+            Token::BitwiseXor(tag, _, _) => *tag,
+            Token::BitwiseAndAssign(tag, _, _) => *tag,
+            Token::BitwiseOrAssign(tag, _, _) => *tag,
+            Token::BitwiseXorAssign(tag, _, _) => *tag,
+            Token::InterrogationSymbol(tag, _, _) => *tag,
+            Token::MatchArm(tag, _, _) => *tag,
+            Token::ShiftOp(tag, _, _, _) => *tag,
+            Token::StarSymbol(tag, _, _) => *tag,
+            Token::PlusSymbol(tag, _, _) => *tag,
+            Token::CommaSymbol(tag, _, _) => *tag,
+            Token::MinusSymbol(tag, _, _) => *tag,
+            Token::ReturnType(tag, _, _) => *tag,
+            Token::SglPtSymbol(tag, _, _) => *tag,
+            Token::DblPtSymbol(tag, _, _) => *tag,
+            Token::InclusiveRange(tag, _, _) => *tag,
+            Token::AmpersandSymbol(tag, _, _) => *tag,
+            Token::SemicolonSymbol(tag, _, _) => *tag,
+            Token::EqualSymbol(tag, _, _) => *tag,
+            Token::Comparison(tag, _, _, _) => *tag,
+            Token::VerticalBarSymbol(tag, _, _) => *tag,
+            Token::AtSymbol(tag, _, _) => *tag,
+            Token::ColonSymbol(tag, _, _) => *tag,
+            Token::Comment(tag, _, _, _, _) => *tag,
+        }
+    }
+}
+
 pub trait Scanner {
     fn next_token(&mut self) -> Token;
 }
@@ -1422,7 +1473,7 @@ impl Rust<'_> {
         let mut state = 0;
         let mut lexema = String::new();
         let mut auxiliary = String::new();
-        let mut position = self.get_position();
+        // let mut position = self.get_position();
 
         loop {
             match state {
@@ -1442,7 +1493,7 @@ impl Rust<'_> {
                             continue;
                         }
                         _ => {
-                            self.set_position(position);
+                            // self.set_position(position);
                             return None;
                         }
                     }
@@ -1498,7 +1549,7 @@ impl Rust<'_> {
                             continue;
                         }
                         _ => {
-                            self.set_position(position);
+                            // self.set_position(position);
                             return None;
                         }
                     }
@@ -1512,7 +1563,7 @@ impl Rust<'_> {
                             continue;
                         }
                         _ => {
-                            self.set_position(position);
+                            // self.set_position(position);
                             return None;
                         }
                     }
@@ -1527,7 +1578,7 @@ impl Rust<'_> {
                             continue;
                         }
                         _ => {
-                            self.set_position(position);
+                            // self.set_position(position);
                             return None;
                         }
                     }
@@ -1548,7 +1599,7 @@ impl Rust<'_> {
                             continue;
                         }
                         _ => {
-                            self.set_position(position);
+                            // self.set_position(position);
                             return None;
                         }
                     }
@@ -1569,7 +1620,7 @@ impl Rust<'_> {
                             continue;
                         }
                         _ => {
-                            self.set_position(position);
+                            // self.set_position(position);
                             return None;
                         }
                     }
@@ -1590,7 +1641,7 @@ impl Rust<'_> {
                             continue;
                         }
                         _ => {
-                            self.set_position(position);
+                            // self.set_position(position);
                             return None;
                         }
                     }
@@ -1611,7 +1662,7 @@ impl Rust<'_> {
                             continue;
                         }
                         _ => {
-                            self.set_position(position);
+                            // self.set_position(position);
                             return None;
                         }
                     }
@@ -1632,7 +1683,7 @@ impl Rust<'_> {
                             continue;
                         }
                         _ => {
-                            self.set_position(position);
+                            // self.set_position(position);
                             return None;
                         }
                     }
@@ -1646,7 +1697,7 @@ impl Rust<'_> {
                             continue;
                         }
                         _ => {
-                            self.set_position(position);
+                            // self.set_position(position);
                             return None;
                         }
                     }
@@ -1658,7 +1709,7 @@ impl Rust<'_> {
                     return lexema.chars().nth(0);
                 }
                 _ => {
-                    self.set_position(position);
+                    // self.set_position(position);
                     return None;
                 }
             }
@@ -1672,7 +1723,7 @@ impl Rust<'_> {
 
         loop {
             match state {
-                0 => {
+                0 => {  
                     match self.current_char() {
                         Some('0') => {
                             lexema.push('0');
@@ -2128,7 +2179,7 @@ impl Rust<'_> {
                             continue;
                         }
                         Some('e') | Some('E') => {
-                            lexema.push(c);
+                            lexema.push('e');
                             self.advance();
                             state = 32;
                             continue;
