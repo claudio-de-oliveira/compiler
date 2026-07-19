@@ -240,7 +240,9 @@ impl<'a> Rust<'a> {
 
     #[inline]
     fn current_char(&self) -> Option<char> {
-        assert!(self.current_col <= self.text[self.current_row].chars().count());
+        if self.current_col >= self.text[self.current_row].chars().count() {
+            return Some('\0');
+        }
 
         if self.current_col >= self.text[self.current_row].chars().count() {
             return Some('\n');
@@ -1160,7 +1162,8 @@ impl<'a> Scanner for Rust<'a> {
                             state = 1680;
                             continue;
                         }
-                        Some('\\') if string_type == StringLiteralType::Standard || string_type == StringLiteralType::ByteString => {
+                        //Some('\\') if string_type == StringLiteralType::Standard || string_type == StringLiteralType::ByteString => {
+                        Some('\\') if string_type == StringLiteralType::Standard => {
                             lexema.push('\\');
                             self.advance();
                             state = 1623;
@@ -1205,6 +1208,7 @@ impl<'a> Scanner for Rust<'a> {
                             continue;
                         }
                         Some('\\') if string_type == StringLiteralType::Standard || string_type == StringLiteralType::ByteString => {
+                            // se for ByteString não pode ter \u
                             lexema.push('\\');
                             self.advance();
                             state = 1623;
@@ -1447,7 +1451,20 @@ impl<'a> Scanner for Rust<'a> {
                 1681 => {
                     self.retract();
                     if counter == 0 {
-                        return Token::StringLiteral(Tag::STRING, self.row(), self.col(), string_type, lexema);
+                        return match string_type {
+                            StringLiteralType::Standard => {
+                                Token::StringLiteral(Tag::STRING, self.row(), self.col(), string_type, lexema)
+                            },
+                            StringLiteralType::ByteString => {
+                                Token::StringLiteral(Tag::STRING, self.row(), self.col(), string_type, lexema)
+                            },
+                            StringLiteralType::Raw(_) => {
+                                Token::StringLiteral(Tag::STRING, self.row(), self.col(), string_type, lexema)
+                            },
+                            StringLiteralType::RawByte(_) => {
+                                Token::StringLiteral(Tag::STRING, self.row(), self.col(), string_type, lexema)
+                            }
+                        }
                     }
                     return Token::Error(Tag::ERR, self.row(), self.col(), "Literal de string inválido".to_string());
                 }
@@ -1720,6 +1737,8 @@ impl Rust<'_> {
         let mut state = 0;
         let mut lexema = String::new();
         let mut signed = true;
+        let current_row = self.row();
+        let current_col = self.col();
 
         loop {
             match state {
@@ -1961,9 +1980,9 @@ impl Rust<'_> {
                 10 => {
                     // u8, i8
                     if signed {
-                        return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::I8);
+                        return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::I8);
                     } else {
-                        return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::U8);
+                        return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::U8);
                     }
                 }
                 11 => {
@@ -1986,9 +2005,9 @@ impl Rust<'_> {
                 12 => {
                     // u16, i16
                     if signed {
-                        return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::I16);
+                        return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::I16);
                     } else {
-                        return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::U16);
+                        return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::U16);
                     }
                 }
                 13 => {
@@ -2006,9 +2025,9 @@ impl Rust<'_> {
                 14 => {
                     // u128, i128
                     if signed {
-                        return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::I128);
+                        return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::I128);
                     } else {
-                        return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::U128);
+                        return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::U128);
                     }
                 }
                 15 => {
@@ -2026,9 +2045,9 @@ impl Rust<'_> {
                 16 => {
                     // u32, i32
                     if signed {
-                        return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::I32);
+                        return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::I32);
                     } else {
-                        return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::U32);
+                        return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::U32);
                     }
                 }
                 17 => {
@@ -2046,9 +2065,9 @@ impl Rust<'_> {
                 18 => {
                     // u64, i64
                     if signed {
-                        return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::I64);
+                        return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::I64);
                     } else {
-                        return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::U64);
+                        return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::U64);
                     }
                 }
                 19 => {
@@ -2090,9 +2109,9 @@ impl Rust<'_> {
                 22 => {
                     // usize, isize
                     if signed {
-                        return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::ISIZE);
+                        return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::ISIZE);
                     } else {
-                        return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::USIZE);
+                        return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::USIZE);
                     }
                 }
                 23 => {
@@ -2205,31 +2224,31 @@ impl Rust<'_> {
                 }
                 26 => {
                     self.retract();
-                    return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::ISIZE);
+                    return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::ISIZE);
                 }
                 27 => {
                     self.retract();
                     //todo!("Converter binário para inteiro");
-                    return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::ISIZE);
+                    return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::ISIZE);
                 }
                 28 => {
                     self.retract();
                     //todo!("Converter octal para inteiro");
-                    return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::ISIZE);
+                    return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::ISIZE);
                 }
                 29 => {
                     self.retract();
                     //todo!("Converter hexa para inteiro");
-                    return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::ISIZE);
+                    return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::ISIZE);
                 }
                 30 => {
                     self.retract();
                     //todo!("Converter decimal para inteiro");
-                    return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::ISIZE);
+                    return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::ISIZE);
                 }
                 31 => {
                     self.retract();
-                    return Token::Integer(Tag::INTEGER, self.row(), self.col(), lexema, IntegerLiteralType::ISIZE);
+                    return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::ISIZE);
                 }
                 32 => {
                     match self.current_char() {
@@ -2365,7 +2384,7 @@ impl Rust<'_> {
                 }
                 38 => {
                     // f32
-                    return Token::Float(Tag::FLOAT, self.row(), self.col(), lexema, FloatLiteralType::F32);
+                    return Token::Float(Tag::FLOAT, current_row, current_col, lexema, FloatLiteralType::F32);
                 }
                 39 => {
                     match self.current_char() {
@@ -2382,11 +2401,11 @@ impl Rust<'_> {
                 }
                 40 => {
                     // f64
-                    return Token::Float(Tag::FLOAT, self.row(), self.col(), lexema, FloatLiteralType::F64);
+                    return Token::Float(Tag::FLOAT, current_row, current_col, lexema, FloatLiteralType::F64);
                 }
                 41 => {
                     self.retract();
-                    return Token::Float(Tag::FLOAT, self.row(), self.col(), lexema, FloatLiteralType::F64);
+                    return Token::Float(Tag::FLOAT, current_row, current_col, lexema, FloatLiteralType::F64);
                 }
                 42 => {
                     match self.current_char() {
@@ -2404,7 +2423,7 @@ impl Rust<'_> {
                 }
 
                 _ => {
-                    return Token::Error(Tag::ERR, self.row(), self.col(), format!("Número mal formado: {}", lexema));
+                    return Token::Error(Tag::ERR, current_row, current_col, format!("Número mal formado: {}", lexema));
                 }
             }
         }

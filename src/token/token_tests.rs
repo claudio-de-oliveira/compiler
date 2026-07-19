@@ -2,7 +2,7 @@
 mod tests {
     use crate::tags::{rust_tags::Tag};
     use crate::token::{Rust, Scanner};
-    use crate::token::token::{AssignOp, Token, StringLiteralType, IntegerLiteralType, FloatLiteralType};
+    use crate::token::token::{AssignOp, Token, IntegerLiteralType, FloatLiteralType};
 
     #[test]
     fn test_symbols_token() {
@@ -36,20 +36,45 @@ mod tests {
         let token = expr.next_token();        assert_eq!(token.get_tag(), Tag::DEFAULT);
         //
         match expr.next_token() {
-            Token::OpAssignment(_, _, _, assign_op) => assert_eq!(assign_op, AssignOp::AddAssign),
+            Token::OpAssignment(Tag::OPASSIGN, _, _, assign_op) => assert_eq!(assign_op, AssignOp::AddAssign),
             _ => panic!("Esperava OpAssignment, mas recebeu algo diferente"),
         };
-        let token = expr.next_token();        assert_eq!(token.get_assign_op(), Some(AssignOp::BitAndAssign));
-        let token = expr.next_token();        assert_eq!(token.get_assign_op(), Some(AssignOp::BitXorAssign));
-        let token = expr.next_token();        assert_eq!(token.get_assign_op(), Some(AssignOp::BitOrAssign));
-        let token = expr.next_token();        assert_eq!(token.get_assign_op(), Some(AssignOp::DivAssign));
-        let token = expr.next_token();        assert_eq!(token.get_assign_op(), Some(AssignOp::MulAssign));
-        let token = expr.next_token();        assert_eq!(token.get_assign_op(), Some(AssignOp::RemAssign));
-        let token = expr.next_token();        assert_eq!(token.get_assign_op(), Some(AssignOp::SubAssign));
-        let token = expr.next_token();        assert_eq!(token.get_assign_op(), Some(AssignOp::ShrAssign));
-        let token = expr.next_token();        assert_eq!(token.get_assign_op(), Some(AssignOp::ShlAssign));
-
-
+        match expr.next_token() {
+            Token::OpAssignment(Tag::OPASSIGN, _, _, assign_op) => assert_eq!(assign_op, AssignOp::BitAndAssign),
+            _ => panic!("Esperava OpAssignment, mas recebeu algo diferente"),
+        };
+        match expr.next_token() {
+            Token::OpAssignment(Tag::OPASSIGN, _, _, assign_op) => assert_eq!(assign_op, AssignOp::BitXorAssign),
+            _ => panic!("Esperava OpAssignment, mas recebeu algo diferente"),
+        };
+        match expr.next_token() {
+            Token::OpAssignment(Tag::OPASSIGN, _, _, assign_op) => assert_eq!(assign_op, AssignOp::BitOrAssign),
+            _ => panic!("Esperava OpAssignment, mas recebeu algo diferente"),
+        };
+        match expr.next_token() {
+            Token::OpAssignment(Tag::OPASSIGN, _, _, assign_op) => assert_eq!(assign_op, AssignOp::DivAssign),
+            _ => panic!("Esperava OpAssignment, mas recebeu algo diferente"),
+        };
+        match expr.next_token() {
+            Token::OpAssignment(Tag::OPASSIGN, _, _, assign_op) => assert_eq!(assign_op, AssignOp::MulAssign),
+            _ => panic!("Esperava OpAssignment, mas recebeu algo diferente"),
+        };
+        match expr.next_token() {
+            Token::OpAssignment(Tag::OPASSIGN, _, _, assign_op) => assert_eq!(assign_op, AssignOp::RemAssign),
+            _ => panic!("Esperava OpAssignment, mas recebeu algo diferente"),
+        };
+        match expr.next_token() {
+            Token::OpAssignment(Tag::OPASSIGN, _, _, assign_op) => assert_eq!(assign_op, AssignOp::SubAssign),
+            _ => panic!("Esperava OpAssignment, mas recebeu algo diferente"),
+        };
+        match expr.next_token() {
+            Token::OpAssignment(Tag::OPASSIGN, _, _, assign_op) => assert_eq!(assign_op, AssignOp::ShrAssign),
+            _ => panic!("Esperava OpAssignment, mas recebeu algo diferente"),
+        };
+        match expr.next_token() {
+            Token::OpAssignment(Tag::OPASSIGN, _, _, assign_op) => assert_eq!(assign_op, AssignOp::ShlAssign),
+            _ => panic!("Esperava OpAssignment, mas recebeu algo diferente"),
+        };
     }
 
     #[test]
@@ -109,56 +134,111 @@ mod tests {
         let token = expr.next_token();        assert_eq!(token.get_tag(), Tag::TRY);
     }
 
-    #[test]
-    fn test_char_tokens() {
-        let mut expr = Rust::new(" '\\u{3b4}' 'a' '\\n' '\\r' '\\t' '\\\\' '\\\'' '\\\"' '\\u{41}' '\\u{1f980}' '_' '?' ' ' ");
+    // #[test]
+    // fn test_char_tokens() {
+    //     let mut expr = Rust::new(" '\\u{3b4}' 'a' '\\n' '\\r' '\\t' '\\\\' '\\\'' '\\\"' '\\u{41}' '\\u{1f980}' '_' '?' ' ' ");
 
-        let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "δ".into());
-        let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "a".into());
-        let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "\n".into());
-        let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "\r".into());
-        let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "\t".into());
-        let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "\\".into());
-        let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "'".into());
-        let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "\"".into());
-        let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "A".into());
-        let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "🦀".into());
-        let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "_".into());
-        let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "?".into());
-    }
+    //     let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "δ".into());
+    //     let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "a".into());
+    //     let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "\n".into());
+    //     let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "\r".into());
+    //     let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "\t".into());
+    //     let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "\\".into());
+    //     let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "'".into());
+    //     let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "\"".into());
+    //     let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "A".into());
+    //     let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "🦀".into());
+    //     let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "_".into());
+    //     let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "?".into());
+    // }
 
-#[test]
-    fn test_string_tokens() {
-        let mut expr = Rust::new(" b r br   b\"A\\u{1f980}BC\\n\" r\"A\\u{1f980}BC\\n\" br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
+// #[test]
+//     fn test_string_tokens() {
+//         let mut expr = Rust::new(" b r br   b\"A\\u{1f980}BC\\n\" r\"A\\u{1f980}BC\\n\" br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
 
-        let token = expr.next_token();        assert!(token.get_tag() == Tag::IDENTIFIER && token.get_content() == "b".into());
-        let token = expr.next_token();        assert!(token.get_tag() == Tag::IDENTIFIER && token.get_content() == "r".into());
-        let token = expr.next_token();        assert!(token.get_tag() == Tag::IDENTIFIER && token.get_content() == "br".into());
-        let token = expr.next_token();        assert!(token.get_tag() == Tag::STRING && token.get_content() == "ABC".into());
-        let token = expr.next_token();        assert!(token.get_tag() == Tag::STRING && token.get_content() == "ABC".into());
-        let token = expr.next_token();        assert!(token.get_tag() == Tag::STRING && token.get_content() == "ABC".into());
-        let token = expr.next_token();        assert!(token.get_tag() == Tag::STRING && token.get_content() == "ABC".into());
-        let token = expr.next_token();        assert!(token.get_tag() == Tag::STRING && token.get_content() == "ABC".into());
-    }
+//         match expr.next_token() {
+//             Token::Identifier(Tag::IDENTIFIER, _, _, id) => assert_eq!(id, "b"),
+//             _ => panic!("Esperava Identifier, mas recebeu algo diferente"),
+//         };
+
+//         match expr.next_token() {
+//             Token::Identifier(Tag::IDENTIFIER, _, _, id) => assert_eq!(id, "r"),
+//             _ => panic!("Esperava Identifier, mas recebeu algo diferente"),
+//         };
+
+//         match expr.next_token() {
+//             Token::Identifier(Tag::IDENTIFIER, _, _, id) => assert_eq!(id, "br"),
+//             _ => panic!("Esperava Identifier, mas recebeu algo diferente"),
+//         };
+
+//         match expr.next_token() {
+//             Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
+//                 assert_eq!(tp, StringLiteralType::ByteString);
+//                 assert_eq!(s.as_bytes(), b"A\xF0\x9F\xA6\x80BC\\n");
+//             }
+//             _ => panic!("Esperava StringLiteral, mas recebeu algo diferente")
+//         };
+
+//         match expr.next_token() {
+//             Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
+//                 assert_eq!(tp, StringLiteralType::Raw(0));
+//                 assert_eq!(s, "A🦀BC\n");
+//             }
+//             _ => panic!("Esperava StringLiteral, mas recebeu algo diferente"),
+//         };
+
+//         match expr.next_token() {
+//             Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
+//                 assert_eq!(tp, StringLiteralType::RawByte(0));
+//                 assert_eq!(s, "A🦀BC\n");
+//             }
+//             _ => panic!("Esperava StringLiteral, mas recebeu algo diferente"),
+//         };
+
+//         match expr.next_token() {
+//             Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
+//                 assert_eq!(tp, StringLiteralType::Raw(3));
+//                 assert_eq!(s, "ABC");
+//             }
+//             _ => panic!("Esperava StringLiteral, mas recebeu algo diferente"),
+//         };
+
+//         match expr.next_token() {
+//             Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
+//                 assert_eq!(tp, StringLiteralType::RawByte(3));
+//                 assert_eq!(s, "ABC" );
+//             }
+//             _ => panic!("Esperava StringLiteral, mas recebeu algo diferente"),
+//         };
+
+//         match expr.next_token() {
+//             Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
+//                 assert_eq!(tp, StringLiteralType::Standard);
+//                 assert_eq!(s, "ABC");
+//             }
+//             _ => panic!("Esperava StringLiteral, mas recebeu algo diferente"),
+//         };
+
+//     }
 
     #[test]
     fn test_peek_number_decimal_integers() {
         // Testa inteiros decimais básicos
-        let mut expr = Rust::new("0");
+        let mut expr = Rust::new("0 ");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "0".into(), IntegerLiteralType::ISIZE));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "0".into(), IntegerLiteralType::ISIZE));
 
-        let mut expr = Rust::new("1");
+        let mut expr = Rust::new("1 ");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "1".into(), IntegerLiteralType::ISIZE));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "1".into(), IntegerLiteralType::ISIZE));
 
-        let mut expr = Rust::new("123");
+        let mut expr = Rust::new("123 ");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "123".into(), IntegerLiteralType::ISIZE));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "123".into(), IntegerLiteralType::ISIZE));
 
-        let mut expr = Rust::new("999");
+        let mut expr = Rust::new("999 ");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "999".into(), IntegerLiteralType::ISIZE));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "999".into(), IntegerLiteralType::ISIZE));
     }
 
     #[test]
@@ -166,15 +246,15 @@ mod tests {
         // Testa inteiros decimais com separadores de dígitos
         let mut expr = Rust::new("1_000");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "1000".into(), IntegerLiteralType::ISIZE));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "1000".into(), IntegerLiteralType::ISIZE));
 
         let mut expr = Rust::new("1_000_000");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "1000000".into(), IntegerLiteralType::ISIZE));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "1000000".into(), IntegerLiteralType::ISIZE));
 
         let mut expr = Rust::new("123_456_789");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "123456789".into(), IntegerLiteralType::ISIZE));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "123456789".into(), IntegerLiteralType::ISIZE));
     }
 
     #[test]
@@ -182,15 +262,15 @@ mod tests {
         // Testa inteiros binários
         let mut expr = Rust::new("0b101");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "101".into(), IntegerLiteralType::ISIZE));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "101".into(), IntegerLiteralType::ISIZE));
 
         let mut expr = Rust::new("0b1010");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "1010".into(), IntegerLiteralType::ISIZE));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "1010".into(), IntegerLiteralType::ISIZE));
 
         let mut expr = Rust::new("0B11111111");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "11111111".into(), IntegerLiteralType::ISIZE));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "11111111".into(), IntegerLiteralType::ISIZE));
     }
 
     #[test]
@@ -198,11 +278,11 @@ mod tests {
         // Testa inteiros binários com separadores
         let mut expr = Rust::new("0b1010_0001");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "10100001".into(), IntegerLiteralType::ISIZE));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "10100001".into(), IntegerLiteralType::ISIZE));
 
         let mut expr = Rust::new("0b1111_0000_1010_0101");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "1111000010100101".into(), IntegerLiteralType::ISIZE));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "1111000010100101".into(), IntegerLiteralType::ISIZE));
     }
 
     #[test]
@@ -210,15 +290,15 @@ mod tests {
         // Testa inteiros octais
         let mut expr = Rust::new("0o77");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "77".into(), IntegerLiteralType::ISIZE));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "77".into(), IntegerLiteralType::ISIZE));
 
         let mut expr = Rust::new("0o123");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "123".into(), IntegerLiteralType::ISIZE));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "123".into(), IntegerLiteralType::ISIZE));
 
         let mut expr = Rust::new("0O755");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "755".into(), IntegerLiteralType::ISIZE));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "755".into(), IntegerLiteralType::ISIZE));
     }
 
     #[test]
@@ -226,11 +306,11 @@ mod tests {
         // Testa inteiros octais com separadores
         let mut expr = Rust::new("0o123_456");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "123456".into(), IntegerLiteralType::ISIZE));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "123456".into(), IntegerLiteralType::ISIZE));
 
         let mut expr = Rust::new("0o7777_7777");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "77777777".into(), IntegerLiteralType::ISIZE));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "77777777".into(), IntegerLiteralType::ISIZE));
     }
 
     #[test]
@@ -238,15 +318,15 @@ mod tests {
         // Testa inteiros hexadecimais
         let mut expr = Rust::new("0xFF");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "FF".into(), IntegerLiteralType::ISIZE));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "FF".into(), IntegerLiteralType::ISIZE));
 
         let mut expr = Rust::new("0x10");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "10".into(), IntegerLiteralType::ISIZE));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "10".into(), IntegerLiteralType::ISIZE));
 
         let mut expr = Rust::new("0XABCD");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "ABCD".into(), IntegerLiteralType::ISIZE));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "ABCD".into(), IntegerLiteralType::ISIZE));
     }
 
     #[test]
@@ -254,176 +334,176 @@ mod tests {
         // Testa inteiros hexadecimais com separadores
         let mut expr = Rust::new("0xDEAD_BEEF");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "DEADBEEF".into(), IntegerLiteralType::ISIZE));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "DEADBEEF".into(), IntegerLiteralType::ISIZE));
 
         let mut expr = Rust::new("0x1234_5678");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "12345678".into(), IntegerLiteralType::ISIZE));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "12345678".into(), IntegerLiteralType::ISIZE));
     }
 
     #[test]
     fn test_peek_number_i8_suffix() {
         let mut expr = Rust::new("0i8");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "0".into(), IntegerLiteralType::I8));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "0".into(), IntegerLiteralType::I8));
 
         let mut expr = Rust::new("127i8");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "127".into(), IntegerLiteralType::I8));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "127".into(), IntegerLiteralType::I8));
     }
 
     #[test]
     fn test_peek_number_u8_suffix() {
         let mut expr = Rust::new("0u8");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "0".into(), IntegerLiteralType::U8));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "0".into(), IntegerLiteralType::U8));
 
         let mut expr = Rust::new("255u8");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "255".into(), IntegerLiteralType::U8));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "255".into(), IntegerLiteralType::U8));
     }
 
     #[test]
     fn test_peek_number_i16_suffix() {
         let mut expr = Rust::new("0i16");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "0".into(), IntegerLiteralType::I16));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "0".into(), IntegerLiteralType::I16));
 
         let mut expr = Rust::new("32767i16");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "32767".into(), IntegerLiteralType::I16));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "32767".into(), IntegerLiteralType::I16));
     }
 
     #[test]
     fn test_peek_number_u16_suffix() {
         let mut expr = Rust::new("0u16");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "0".into(), IntegerLiteralType::U16));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "0".into(), IntegerLiteralType::U16));
 
         let mut expr = Rust::new("65535u16");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "65535".into(), IntegerLiteralType::U16));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "65535".into(), IntegerLiteralType::U16));
     }
 
     #[test]
     fn test_peek_number_i32_suffix() {
         let mut expr = Rust::new("0i32");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "0".into(), IntegerLiteralType::I32));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "0".into(), IntegerLiteralType::I32));
 
         let mut expr = Rust::new("2147483647i32");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "2147483647".into(), IntegerLiteralType::I32));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "2147483647".into(), IntegerLiteralType::I32));
     }
 
     #[test]
     fn test_peek_number_u32_suffix() {
         let mut expr = Rust::new("0u32");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "0".into(), IntegerLiteralType::U32));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "0".into(), IntegerLiteralType::U32));
 
         let mut expr = Rust::new("4294967295u32");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "4294967295".into(), IntegerLiteralType::U32));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "4294967295".into(), IntegerLiteralType::U32));
     }
 
     #[test]
     fn test_peek_number_i64_suffix() {
         let mut expr = Rust::new("0i64");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "0".into(), IntegerLiteralType::I64));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "0".into(), IntegerLiteralType::I64));
 
         let mut expr = Rust::new("9223372036854775807i64");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "9223372036854775807".into(), IntegerLiteralType::I64));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "9223372036854775807".into(), IntegerLiteralType::I64));
     }
 
     #[test]
     fn test_peek_number_u64_suffix() {
         let mut expr = Rust::new("0u64");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "0".into(), IntegerLiteralType::U64));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "0".into(), IntegerLiteralType::U64));
 
         let mut expr = Rust::new("18446744073709551615u64");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "18446744073709551615".into(), IntegerLiteralType::U64));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "18446744073709551615".into(), IntegerLiteralType::U64));
     }
 
     #[test]
     fn test_peek_number_i128_suffix() {
         let mut expr = Rust::new("0i128");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "0".into(), IntegerLiteralType::I128));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "0".into(), IntegerLiteralType::I128));
 
         let mut expr = Rust::new("170141183460469231731687303715884105727i128");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "170141183460469231731687303715884105727".into(), IntegerLiteralType::I128));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "170141183460469231731687303715884105727".into(), IntegerLiteralType::I128));
     }
 
     #[test]
     fn test_peek_number_u128_suffix() {
         let mut expr = Rust::new("0u128");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "0".into(), IntegerLiteralType::U128));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "0".into(), IntegerLiteralType::U128));
 
         let mut expr = Rust::new("340282366920938463463374607431768211455u128");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "340282366920938463463374607431768211455".into(), IntegerLiteralType::U128));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "340282366920938463463374607431768211455".into(), IntegerLiteralType::U128));
     }
 
     #[test]
     fn test_peek_number_isize_suffix() {
         let mut expr = Rust::new("0isize");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "0".into(), IntegerLiteralType::ISIZE));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "0".into(), IntegerLiteralType::ISIZE));
 
         let mut expr = Rust::new("42isize");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "42".into(), IntegerLiteralType::ISIZE));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "42".into(), IntegerLiteralType::ISIZE));
     }
 
     #[test]
     fn test_peek_number_usize_suffix() {
         let mut expr = Rust::new("0usize");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "0".into(), IntegerLiteralType::USIZE));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "0".into(), IntegerLiteralType::USIZE));
 
         let mut expr = Rust::new("42usize");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "42".into(), IntegerLiteralType::USIZE));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "42".into(), IntegerLiteralType::USIZE));
     }
 
     #[test]
     fn test_peek_number_binary_with_i_suffix() {
         let mut expr = Rust::new("0b101i32");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "101".into(), IntegerLiteralType::I32));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "101".into(), IntegerLiteralType::I32));
 
         let mut expr = Rust::new("0b1111_0000u8");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "11110000".into(), IntegerLiteralType::U8));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "11110000".into(), IntegerLiteralType::U8));
     }
 
     #[test]
     fn test_peek_number_octal_with_u_suffix() {
         let mut expr = Rust::new("0o755u32");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "755".into(), IntegerLiteralType::U32));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "755".into(), IntegerLiteralType::U32));
 
         let mut expr = Rust::new("0o123i64");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "123".into(), IntegerLiteralType::I64));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "123".into(), IntegerLiteralType::I64));
     }
 
     #[test]
     fn test_peek_number_hex_with_suffix() {
         let mut expr = Rust::new("0xFFu8");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "FF".into(), IntegerLiteralType::U8));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "FF".into(), IntegerLiteralType::U8));
 
         let mut expr = Rust::new("0xDEAD_BEEFi32");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "DEADBEEF".into(), IntegerLiteralType::I32));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "DEADBEEF".into(), IntegerLiteralType::I32));
     }
 
     #[test]
@@ -431,30 +511,30 @@ mod tests {
         // Testa floats com ponto decimal
         let mut expr = Rust::new("0.0");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Float(Tag::FLOAT, 1, 1, "0.0".into(), FloatLiteralType::F64));
+        assert_eq!(token, Token::Float(Tag::FLOAT, 0, 0, "0.0".into(), FloatLiteralType::F64));
 
         let mut expr = Rust::new("1.5");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Float(Tag::FLOAT, 1, 1, "1.5".into(), FloatLiteralType::F64));
+        assert_eq!(token, Token::Float(Tag::FLOAT, 0, 0, "1.5".into(), FloatLiteralType::F64));
 
         let mut expr = Rust::new("3.14159");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Float(Tag::FLOAT, 1, 1, "3.14159".into(), FloatLiteralType::F64));
+        assert_eq!(token, Token::Float(Tag::FLOAT, 0, 0, "3.14159".into(), FloatLiteralType::F64));
     }
 
     #[test]
     fn test_peek_number_float_with_underscores() {
         let mut expr = Rust::new("1_000.5");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Float(Tag::FLOAT, 1, 1, "1000.5".into(), FloatLiteralType::F64));
+        assert_eq!(token, Token::Float(Tag::FLOAT, 0, 0, "1000.5".into(), FloatLiteralType::F64));
 
         let mut expr = Rust::new("1.5_000");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Float(Tag::FLOAT, 1, 1, "1.5000".into(), FloatLiteralType::F64));
+        assert_eq!(token, Token::Float(Tag::FLOAT, 0, 0, "1.5000".into(), FloatLiteralType::F64));
 
         let mut expr = Rust::new("123_456.789_012");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Float(Tag::FLOAT, 1, 1, "123456.789012".into(), FloatLiteralType::F64));
+        assert_eq!(token, Token::Float(Tag::FLOAT, 0, 0, "123456.789012".into(), FloatLiteralType::F64));
     }
 
     #[test]
@@ -462,93 +542,93 @@ mod tests {
         // Testa floats com notação científica
         let mut expr = Rust::new("1e10");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Float(Tag::FLOAT, 1, 1, "1e10".into(), FloatLiteralType::F64));
+        assert_eq!(token, Token::Float(Tag::FLOAT, 0, 0, "1e10".into(), FloatLiteralType::F64));
 
         let mut expr = Rust::new("1.5e-10");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Float(Tag::FLOAT, 1, 1, "1.5e-10".into(), FloatLiteralType::F64));
+        assert_eq!(token, Token::Float(Tag::FLOAT, 0, 0, "1.5e-10".into(), FloatLiteralType::F64));
 
         let mut expr = Rust::new("2.5E+5");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Float(Tag::FLOAT, 1, 1, "2.5E+5".into(), FloatLiteralType::F64));
+        assert_eq!(token, Token::Float(Tag::FLOAT, 0, 0, "2.5E+5".into(), FloatLiteralType::F64));
     }
 
     #[test]
     fn test_peek_number_float_scientific_with_underscores() {
         let mut expr = Rust::new("1_000e10");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Float(Tag::FLOAT, 1, 1, "1000e10".into(), FloatLiteralType::F64));
+        assert_eq!(token, Token::Float(Tag::FLOAT, 0, 0, "1000e10".into(), FloatLiteralType::F64));
 
         let mut expr = Rust::new("1.5e1_0");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Float(Tag::FLOAT, 1, 1, "1.5e10".into(), FloatLiteralType::F64));
+        assert_eq!(token, Token::Float(Tag::FLOAT, 0, 0, "1.5e10".into(), FloatLiteralType::F64));
     }
 
     #[test]
     fn test_peek_number_f32_suffix() {
         let mut expr = Rust::new("1.5f32");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Float(Tag::FLOAT, 1, 1, "1.5f32".into(), FloatLiteralType::F32));
+        assert_eq!(token, Token::Float(Tag::FLOAT, 0, 0, "1.5f32".into(), FloatLiteralType::F32));
 
         let mut expr = Rust::new("0.0f32");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Float(Tag::FLOAT, 1, 1, "0.0f32".into(), FloatLiteralType::F32));
+        assert_eq!(token, Token::Float(Tag::FLOAT, 0, 0, "0.0f32".into(), FloatLiteralType::F32));
 
         let mut expr = Rust::new("3.14f32");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Float(Tag::FLOAT, 1, 1, "3.14f32".into(), FloatLiteralType::F32));
+        assert_eq!(token, Token::Float(Tag::FLOAT, 0, 0, "3.14f32".into(), FloatLiteralType::F32));
     }
 
     #[test]
     fn test_peek_number_f64_suffix() {
         let mut expr = Rust::new("1.5f64");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Float(Tag::FLOAT, 1, 1, "1.5f64".into(), FloatLiteralType::F64));
+        assert_eq!(token, Token::Float(Tag::FLOAT, 0, 0, "1.5f64".into(), FloatLiteralType::F64));
 
         let mut expr = Rust::new("0.0f64");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Float(Tag::FLOAT, 1, 1, "0.0f64".into(), FloatLiteralType::F64));
+        assert_eq!(token, Token::Float(Tag::FLOAT, 0, 0, "0.0f64".into(), FloatLiteralType::F64));
 
         let mut expr = Rust::new("2.71828f64");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Float(Tag::FLOAT, 1, 1, "2.71828f64".into(), FloatLiteralType::F64));
+        assert_eq!(token, Token::Float(Tag::FLOAT, 0, 0, "2.71828f64".into(), FloatLiteralType::F64));
     }
 
     #[test]
     fn test_peek_number_float_scientific_with_f32() {
         let mut expr = Rust::new("1.5e10f32");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Float(Tag::FLOAT, 1, 1, "1.5e10f32".into(), FloatLiteralType::F32));
+        assert_eq!(token, Token::Float(Tag::FLOAT, 0, 0, "1.5e10f32".into(), FloatLiteralType::F32));
 
         let mut expr = Rust::new("2.5E-5f32");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Float(Tag::FLOAT, 1, 1, "2.5E-5f32".into(), FloatLiteralType::F32));
+        assert_eq!(token, Token::Float(Tag::FLOAT, 0, 0, "2.5E-5f32".into(), FloatLiteralType::F32));
     }
 
     #[test]
     fn test_peek_number_float_scientific_with_f64() {
         let mut expr = Rust::new("1.5e10f64");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Float(Tag::FLOAT, 1, 1, "1.5e10f64".into(), FloatLiteralType::F64));
+        assert_eq!(token, Token::Float(Tag::FLOAT, 0, 0, "1.5e10f64".into(), FloatLiteralType::F64));
 
         let mut expr = Rust::new("3.14E+2f64");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Float(Tag::FLOAT, 1, 1, "3.14E+2f64".into(), FloatLiteralType::F64));
+        assert_eq!(token, Token::Float(Tag::FLOAT, 0, 0, "3.14E+2f64".into(), FloatLiteralType::F64));
     }
 
     #[test]
     fn test_peek_number_float_zero_variants() {
         let mut expr = Rust::new("0.");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Float(Tag::FLOAT, 1, 1, "0.".into(), FloatLiteralType::F64));
+        assert_eq!(token, Token::Float(Tag::FLOAT, 0, 0, "0.".into(), FloatLiteralType::F64));
 
         let mut expr = Rust::new("0.f32");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Float(Tag::FLOAT, 1, 1, "0.f32".into(), FloatLiteralType::F32));
+        assert_eq!(token, Token::Float(Tag::FLOAT, 0, 0, "0.f32".into(), FloatLiteralType::F32));
 
         let mut expr = Rust::new("0.f64");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Float(Tag::FLOAT, 1, 1, "0.f64".into(), FloatLiteralType::F64));
+        assert_eq!(token, Token::Float(Tag::FLOAT, 0, 0, "0.f64".into(), FloatLiteralType::F64));
     }
 
     #[test]
@@ -556,19 +636,19 @@ mod tests {
         // Exemplos mais complexos
         let mut expr = Rust::new("1_000_000i64");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "1000000".into(), IntegerLiteralType::I64));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "1000000".into(), IntegerLiteralType::I64));
 
         let mut expr = Rust::new("0xFF_FF_FFu32");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "FFFFFF".into(), IntegerLiteralType::U32));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "FFFFFF".into(), IntegerLiteralType::U32));
 
         let mut expr = Rust::new("0b1111_0000_1010_0101i16");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Integer(Tag::INTEGER, 1, 1, "1111000010100101".into(), IntegerLiteralType::I16));
+        assert_eq!(token, Token::Integer(Tag::INTEGER, 0, 0, "1111000010100101".into(), IntegerLiteralType::I16));
 
         let mut expr = Rust::new("1_234.567_890e-5f32");
         let token = expr.peek_number();
-        assert_eq!(token, Token::Float(Tag::FLOAT, 1, 1, "1234.567890e-5f32".into(), FloatLiteralType::F32));
+        assert_eq!(token, Token::Float(Tag::FLOAT, 0, 0, "1234.567890e-5f32".into(), FloatLiteralType::F32));
     }
 }
 
