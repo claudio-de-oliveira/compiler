@@ -240,9 +240,9 @@ impl<'a> Rust<'a> {
 
     #[inline]
     fn current_char(&self) -> Option<char> {
-        if self.current_col >= self.text[self.current_row].chars().count() {
+        if self.current_row >= self.text.len() {
             return Some('\0');
-        }
+        } 
 
         if self.current_col >= self.text[self.current_row].chars().count() {
             return Some('\n');
@@ -1442,7 +1442,7 @@ impl<'a> Scanner for Rust<'a> {
                             continue;
                         }
                         _ => {
-                            self.advance();
+                            // self.advance();
                             state = 1681;
                             continue;
                         }
@@ -1829,7 +1829,7 @@ impl Rust<'_> {
                             continue;
                         }
                         _ => {
-                            self.advance();
+                            // self.advance();
                             state = 26;
                             continue;
                         }
@@ -1903,13 +1903,23 @@ impl Rust<'_> {
                             state = 35;
                             continue;
                         }
+                        Some('f') => {
+                            lexema.push('f');
+                            self.advance();
+                            state = 36;
+                            continue;
+                        }
                         Some('_') => {
                             self.advance();
                             state = 35;
                             continue;
                         }
                         _ => {
-                            todo!("Terra");
+                            lexema.push('f');
+                            lexema.push('6');
+                            lexema.push('4');
+                            state = 40;
+                            continue;
                         }
                     }
                 }
@@ -1938,9 +1948,13 @@ impl Rust<'_> {
                             state = 9;
                             continue;
                         }
+                        // Some('\0') => {
+                        //     state = 27;
+                        //     continue;
+                        // }
                         _ => {
                             state = 27;
-                            self.advance();
+                            // self.advance();
                             continue;
                         }
                     }
@@ -2140,7 +2154,7 @@ impl Rust<'_> {
                             continue;
                         }
                         _ => {
-                            self.advance();
+                            // self.advance();
                             state = 28;
                             continue;
                         }
@@ -2172,7 +2186,7 @@ impl Rust<'_> {
                             continue;
                         }
                         _ => {
-                            self.advance();
+                            // self.advance();
                             state = 29;
                             continue;
                         }
@@ -2216,7 +2230,7 @@ impl Rust<'_> {
                             continue;
                         }
                         _ => {
-                            self.advance();
+                            // self.advance();
                             state = 30;
                             continue;
                         }
@@ -2307,12 +2321,13 @@ impl Rust<'_> {
                             continue;
                         }
                         Some('f') => {
+                            lexema.push('f');
                             self.advance();
                             state = 36;
                             continue;
                         }
                         _ => {
-                            self.advance();
+                            // self.advance();
                             state = 41;
                             continue;
                         }
@@ -2338,14 +2353,14 @@ impl Rust<'_> {
                             continue;
                         }
                         Some('e') | Some('E') => {
-                            lexema.push('f');
+                            lexema.push('e');
                             self.advance();
                             state = 32;
                             continue;
                         }
                         _ => {
-                            self.advance();
-                            state = 31;
+                            // self.advance();
+                            state = 41;
                             continue;
                         }
                     }
@@ -2415,7 +2430,7 @@ impl Rust<'_> {
                             continue;
                         }
                         _ => {
-                            self.advance();
+                            // self.advance();
                             state = 40;
                             continue;
                         }
