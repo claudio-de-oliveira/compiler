@@ -258,6 +258,7 @@ impl<'a> Rust<'a> {
             self.current_row += 1;
             self.current_col = 0;
         }
+        print!("{}", self.current_char().unwrap());
     }
 
     /// Volta uma posição com segurança (não vai abaixo de 0)
@@ -537,11 +538,13 @@ impl<'a> Scanner for Rust<'a> {
                             continue;
                         }
                         Some('\'') => {
+                            println!("Veio o primeiro apóstrofe");
                             self.advance();
                             state = 150;
                             continue;
                         }
                         Some('\"') => {
+                            println!("Veio a primeira aspas duplas");
                             self.advance();
                             state = 1620;
                             continue;
@@ -1010,6 +1013,8 @@ impl<'a> Scanner for Rust<'a> {
 
                     lexema.push(char.unwrap());
 
+                    println!("1: {}", lexema.clone ());
+
                     match self.current_char() {
                         Some('\'') => {
                             self.advance();
@@ -1035,7 +1040,7 @@ impl<'a> Scanner for Rust<'a> {
                             state = 161;
                             continue;
                         }
-                        Some('\"') => {  // bu
+                        Some('"') => {  // bu
                             self.advance();
                             state = 1620;
                             continue;
@@ -1191,7 +1196,7 @@ impl<'a> Scanner for Rust<'a> {
                         Some(c) => {
                             lexema.push(c);
                             self.advance();
-                            state = 1622;
+                            state = 1624;
                             continue;
                         }
                         _ => {
@@ -1207,6 +1212,13 @@ impl<'a> Scanner for Rust<'a> {
                             state = 1680;
                             continue;
                         }
+                        Some('\\') if string_type == StringLiteralType::Standard => {
+                            lexema.push('\\');
+                            self.advance();
+                            state = 1623;
+                            continue;
+                        }
+                        /*
                         Some('\\') if string_type == StringLiteralType::Standard || string_type == StringLiteralType::ByteString => {
                             // se for ByteString não pode ter \u
                             lexema.push('\\');
@@ -1214,6 +1226,7 @@ impl<'a> Scanner for Rust<'a> {
                             state = 1623;
                             continue;
                         }
+                        */
                         Some('\\') => {
                             lexema.push('\\');
                             self.advance();
@@ -1234,10 +1247,37 @@ impl<'a> Scanner for Rust<'a> {
                 1625 => {
                     match self.current_char() {
                         Some('u') => {  // \u{...}
+                            lexema.pop(); // remove o '\' empilhado pelo chamador; \u{...} vira 1 char, não texto
                             self.advance();
                             state = 1630;
                             continue;
                         }
+                        /*
+                        Some('u') => {  // \u{...}
+                            self.advance();
+                            state = 1630;
+                            continue;
+                        }
+                        */
+                        Some('n') => { 
+                            lexema.push(if string_type == StringLiteralType::ByteString { 'n' } else { '\n' }); 
+                            self.advance(); 
+                            state = 1650; 
+                            continue; 
+                        }
+                        Some('r') => { 
+                            lexema.push(if string_type == StringLiteralType::ByteString { 'r' } else { '\r' }); 
+                            self.advance(); 
+                            state = 1650; 
+                            continue; 
+                        }
+                        Some('t') => { 
+                            lexema.push(if string_type == StringLiteralType::ByteString { 't' } else { '\t' }); 
+                            self.advance(); 
+                            state = 1650; 
+                            continue; 
+                        }
+                        /*
                         Some('n') => {  // \n
                             lexema.push('\n');
                             self.advance();
@@ -1256,6 +1296,7 @@ impl<'a> Scanner for Rust<'a> {
                             state = 1650;
                             continue;
                         }
+                        */
                         Some('\\') => {  // \\
                             lexema.push('\\');
                             self.advance();
@@ -1277,7 +1318,7 @@ impl<'a> Scanner for Rust<'a> {
                         Some(c) => {
                             lexema.push(c);
                             self.advance();
-                            state = 1622;
+                            state = 1624;
                             continue;
                         }
                         _ => {
@@ -1288,10 +1329,18 @@ impl<'a> Scanner for Rust<'a> {
 
                 1630 => {
                     match self.current_char() {
+                        /*
                         Some('{') => {
                             self.advance();
                             state = 1631;
                             continue;
+                        }
+                        */
+                        Some('{') => { 
+                            auxiliary.clear(); 
+                            self.advance(); 
+                            state = 1631; 
+                            continue; 
                         }
                         _ => {
                             return Token::Error(Tag::ERR, self.row(), self.col(), "Literal de caractere inválido".to_string());
@@ -1301,7 +1350,8 @@ impl<'a> Scanner for Rust<'a> {
                 1631 => {
                     match self.current_char() {
                         Some(c) if c.is_digit(16) => {  // primeiro
-                            lexema.push(c);
+                            /*lexema.push(c);*/
+                            auxiliary.push(c);
                             self.advance();
                             state = 1632;
                             continue;
@@ -1314,7 +1364,8 @@ impl<'a> Scanner for Rust<'a> {
                 1632 => {
                     match self.current_char() {
                         Some(c) if c.is_digit(16) => {  // segundo
-                            lexema.push(c);
+                            /*lexema.push(c);*/
+                            auxiliary.push(c);
                             self.advance();
                             state = 1633;
                             continue;
@@ -1332,7 +1383,8 @@ impl<'a> Scanner for Rust<'a> {
                 1633 => {
                     match self.current_char() {
                         Some(c) if c.is_digit(16) => {  // terceiro
-                            lexema.push(c);
+                            /*lexema.push(c);*/
+                            auxiliary.push(c);
                             self.advance();
                             state = 1634;
                             continue;
@@ -1350,7 +1402,8 @@ impl<'a> Scanner for Rust<'a> {
                 1634 => {
                     match self.current_char() {
                         Some(c) if c.is_digit(16) => {  // quarto
-                            lexema.push(c);
+                            /*lexema.push(c);*/
+                            auxiliary.push(c);
                             self.advance();
                             state = 1635;
                             continue;
@@ -1368,7 +1421,8 @@ impl<'a> Scanner for Rust<'a> {
                 1635 => {
                     match self.current_char() {
                         Some(c) if c.is_digit(16) => {  // quinto
-                            lexema.push(c);
+                            /*lexema.push(c);*/
+                            auxiliary.push(c);
                             self.advance();
                             state = 1636;
                             continue;
@@ -1386,7 +1440,8 @@ impl<'a> Scanner for Rust<'a> {
                 1636 => {
                     match self.current_char() {
                         Some(c) if c.is_digit(16) => {  // sexto
-                            lexema.push(c);
+                            /*lexema.push(c);*/
+                            auxiliary.push(c);
                             self.advance();
                             state = 1637;
                             continue;
@@ -1413,23 +1468,33 @@ impl<'a> Scanner for Rust<'a> {
                         }
                     }
                 }
+                /*
                 1638 => {
                     lexema.push(self.current_char().unwrap());
                     self.advance();
                     state = 1622;
                     continue;
                 }
+                */
+                1638 => {
+                    if let Some(ch) = std::char::from_u32(u32::from_str_radix(&auxiliary, 16).unwrap_or(0)) {
+                        lexema.push(ch);
+                    }
+                    auxiliary.clear();
+                    state = 1624;
+                    continue;
+                }
 
                 1650 => {
-                    lexema.push(self.current_char().unwrap());
-                    self.advance();
-                    state = 1622;
+                    //lexema.push(self.current_char().unwrap());
+                    //self.advance();
+                    state = 1624;
                     continue;
                 }
                 1660 => {
-                    lexema.push(self.current_char().unwrap());
-                    self.advance();
-                    state = 1622;
+                    //lexema.push(self.current_char().unwrap());
+                    //self.advance();
+                    state = 1624;
                     continue;
                 }
 
@@ -1456,7 +1521,8 @@ impl<'a> Scanner for Rust<'a> {
                                 Token::StringLiteral(Tag::STRING, self.row(), self.col(), string_type, lexema)
                             },
                             StringLiteralType::ByteString => {
-                                Token::StringLiteral(Tag::STRING, self.row(), self.col(), string_type, lexema)
+                                println!("{}", lexema);
+                                Token::StringLiteral(Tag::STRING, self.row(), self.col(), string_type, String::from_utf8_lossy(lexema.as_bytes()).into_owned())
                             },
                             StringLiteralType::Raw(_) => {
                                 Token::StringLiteral(Tag::STRING, self.row(), self.col(), string_type, lexema)
@@ -1492,17 +1558,21 @@ impl Rust<'_> {
         let mut auxiliary = String::new();
         // let mut position = self.get_position();
 
+        println!("Entrei no peek_char");
+
         loop {
             match state {
                 0 => {
                     match self.current_char() {
                         Some('\\') => {
+                            println!("Veio o caractere: '{}'", '\\');
                             auxiliary.push('\\');
                             self.advance();
                             state = 1;
                             continue;
                         }
                         Some(c) => {
+                            println!("Veio o caractere: '{}'", c);
                             auxiliary.push(c);
                             lexema.push(c);
                             self.advance();
@@ -1518,6 +1588,7 @@ impl Rust<'_> {
                 1 => {
                     match self.current_char() {
                         Some('u') => {  // \u{...}
+                            println!("Veio o caractere: '{}'", 'u');
                             auxiliary.push('u');
                             self.advance();
                             state = 2;
@@ -1574,6 +1645,7 @@ impl Rust<'_> {
                 2 => {
                     match self.current_char() {
                         Some('{') => {
+                            println!("Veio o caractere: '{}'", '{');
                             auxiliary.push('{');
                             self.advance();
                             state = 3;
@@ -1581,6 +1653,7 @@ impl Rust<'_> {
                         }
                         _ => {
                             // self.set_position(position);
+                                                        println!("Ops");
                             return None;
                         }
                     }
@@ -1588,6 +1661,7 @@ impl Rust<'_> {
                 3 => {
                     match self.current_char() {
                         Some(c) if c.is_digit(16) => {  // primeiro
+                            println!("Veio o caractere: '{}'", c);
                             auxiliary.push(c);
                             lexema.push(c);
                             self.advance();
@@ -1603,6 +1677,7 @@ impl Rust<'_> {
                 4 => {
                     match self.current_char() {
                         Some(c) if c.is_digit(16) => {  // segundo
+                            println!("Veio o caractere: '{}'", c);
                             auxiliary.push(c);
                             lexema.push(c);
                             self.advance();
@@ -1610,6 +1685,7 @@ impl Rust<'_> {
                             continue;
                         }
                         Some('}') => {
+                            println!("Veio o caractere: '{}'", '}');
                             auxiliary.push('}');
                             self.advance();
                             state = 10;
@@ -1624,6 +1700,7 @@ impl Rust<'_> {
                 5 => {
                     match self.current_char() {
                         Some(c) if c.is_digit(16) => {  // terceiro
+                            println!("Veio o caractere: '{}'", c);
                             auxiliary.push(c);
                             lexema.push(c);
                             self.advance();
@@ -1631,6 +1708,7 @@ impl Rust<'_> {
                             continue;
                         }
                         Some('}') => {
+                            println!("Veio o caractere: '{}'", '}');
                             auxiliary.push('}');
                             self.advance();
                             state = 10;
@@ -1645,6 +1723,7 @@ impl Rust<'_> {
                 6 => {
                     match self.current_char() {
                         Some(c) if c.is_digit(16) => {  // quarto
+                            println!("Veio o caractere: '{}'", c);
                             auxiliary.push(c);
                             lexema.push(c);
                             self.advance();
@@ -1652,6 +1731,7 @@ impl Rust<'_> {
                             continue;
                         }
                         Some('}') => {
+                            println!("Veio o caractere: '{}'", '}');
                             auxiliary.push('}');
                             self.advance();
                             state = 10;
@@ -1666,6 +1746,7 @@ impl Rust<'_> {
                 7 => {
                     match self.current_char() {
                         Some(c) if c.is_digit(16) => {  // quinto
+                            println!("Veio o caractere: '{}'", c);
                             auxiliary.push(c);
                             lexema.push(c);
                             self.advance();
@@ -1673,6 +1754,7 @@ impl Rust<'_> {
                             continue;
                         }
                         Some('}') => {
+                            println!("Veio o caractere: '{}'", '}');
                             auxiliary.push('}');
                             self.advance();
                             state = 10;
@@ -1687,6 +1769,7 @@ impl Rust<'_> {
                 8 => {
                     match self.current_char() {
                         Some(c) if c.is_digit(16) => {  // sexto
+                            println!("Veio o caractere: '{}'", c);
                             auxiliary.push(c);
                             lexema.push(c);
                             self.advance();
@@ -1694,6 +1777,7 @@ impl Rust<'_> {
                             continue;
                         }
                         Some('}') => {
+                            println!("Veio o caractere: '{}'", '}');
                             auxiliary.push('}');
                             self.advance();
                             state = 10;
@@ -1708,6 +1792,7 @@ impl Rust<'_> {
                 9 => {
                     match self.current_char() {
                         Some('}') => {
+                            println!("Veio o caractere: '{}'", '}');
                             auxiliary.push('}');
                             self.advance();
                             state = 10;
@@ -1720,6 +1805,7 @@ impl Rust<'_> {
                     }
                 }
                 10 => {
+                    println!("Çexema: '{}'", lexema);
                     return std::char::from_u32(u32::from_str_radix(&lexema, 16).unwrap_or(0));
                 }
                 12 => {

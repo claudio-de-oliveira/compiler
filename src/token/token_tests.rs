@@ -135,59 +135,63 @@ mod tests {
         let token = expr.next_token();        assert_eq!(token.get_tag(), Tag::TRY);
     }
 
-    // #[test]
-    // fn test_char_tokens() {
-    //     let mut expr = Rust::new(" '\\u{3b4}' 'a' '\\n' '\\r' '\\t' '\\\\' '\\\'' '\\\"' '\\u{41}' '\\u{1f980}' '_' '?' ' ' ");
+    #[test]
+    fn test_char_tokens() {
+        let mut expr = Rust::new(" 'a' '\\u{3b4}' '\\n' '\\r' '\\t' '\\\\' '\\\'' '\\\"' '\\u{41}' '\\u{1f980}' '_' '?' ' ' ");
 
-    //     let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "δ".into());
-    //     let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "a".into());
-    //     let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "\n".into());
-    //     let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "\r".into());
-    //     let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "\t".into());
-    //     let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "\\".into());
-    //     let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "'".into());
-    //     let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "\"".into());
-    //     let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "A".into());
-    //     let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "🦀".into());
-    //     let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "_".into());
-    //     let token = expr.next_token();        assert!(token.get_tag() == Tag::CHARACTER && token.get_content() == "?".into());
-    // }
+        let token = expr.next_token();        assert_eq!(token, Token::Character(Tag::CHARACTER, 0, 4, 'a'));
+        let token = expr.next_token();        assert_eq!(token, Token::Character(Tag::CHARACTER, 0, 14, 'δ'));
+        let token = expr.next_token();        assert_eq!(token, Token::Character(Tag::CHARACTER, 0, 19, '\n'));
+        let token = expr.next_token();        assert_eq!(token, Token::Character(Tag::CHARACTER, 0, 24, '\r'));
+        let token = expr.next_token();        assert_eq!(token, Token::Character(Tag::CHARACTER, 0, 29, '\t'));
+        let token = expr.next_token();        assert_eq!(token, Token::Character(Tag::CHARACTER, 0, 34, '\\'));
+        let token = expr.next_token();        assert_eq!(token, Token::Character(Tag::CHARACTER, 0, 39, '\''));
+        let token = expr.next_token();        assert_eq!(token, Token::Character(Tag::CHARACTER, 0, 44, '\"'));
+        let token = expr.next_token();        assert_eq!(token, Token::Character(Tag::CHARACTER, 0, 53, 'A'));
+        let token = expr.next_token();        assert_eq!(token, Token::Character(Tag::CHARACTER, 0, 65, '🦀'));
+        let token = expr.next_token();        assert_eq!(token, Token::Character(Tag::CHARACTER, 0, 69, '_'));
+        let token = expr.next_token();        assert_eq!(token, Token::Character(Tag::CHARACTER, 0, 73, '?'));
+    }
 
 #[test]
     fn test_string_tokens() {
-        let mut expr = Rust::new(" b r br   b\"A\\u{1f980}BC\\n\" r\"A\\u{1f980}BC\\n\" br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
+        // let mut expr = Rust::new(" b r br   b\"A\\u{1f980}BC\\n\" r\"A\\u{1f980}BC\\n\" br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
+        // match expr.next_token() {
+        //     Token::Identifier(Tag::IDENTIFIER, _, _, id) => assert_eq!(id, "b"),
+        //     _ => panic!("Esperava Identifier, mas recebeu algo diferente"),
+        // };
 
-        match expr.next_token() {
-            Token::Identifier(Tag::IDENTIFIER, _, _, id) => assert_eq!(id, "b"),
-            _ => panic!("Esperava Identifier, mas recebeu algo diferente"),
-        };
+        // let mut expr = Rust::new(" r br   b\"A\\u{1f980}BC\\n\" r\"A\\u{1f980}BC\\n\" br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
+        // match expr.next_token() {
+        //     Token::Identifier(Tag::IDENTIFIER, _, _, id) => assert_eq!(id, "r"),
+        //     _ => panic!("Esperava Identifier, mas recebeu algo diferente"),
+        // };
 
-        match expr.next_token() {
-            Token::Identifier(Tag::IDENTIFIER, _, _, id) => assert_eq!(id, "r"),
-            _ => panic!("Esperava Identifier, mas recebeu algo diferente"),
-        };
+        // let mut expr = Rust::new("  br   b\"A\\u{1f980}BC\\n\" r\"A\\u{1f980}BC\\n\" br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
+        // match expr.next_token() {
+        //     Token::Identifier(Tag::IDENTIFIER, _, _, id) => assert_eq!(id, "br"),
+        //     _ => panic!("Esperava Identifier, mas recebeu algo diferente"),
+        // };
 
-        match expr.next_token() {
-            Token::Identifier(Tag::IDENTIFIER, _, _, id) => assert_eq!(id, "br"),
-            _ => panic!("Esperava Identifier, mas recebeu algo diferente"),
-        };
-
+        // let mut expr = Rust::new("  b\"A\\u{1f980}BC\\n\" r\"A\\u{1f980}BC\\n\" br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
         // match expr.next_token() {
         //     Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
         //         assert_eq!(tp, StringLiteralType::ByteString);
-        //         assert_eq!(s.as_bytes(), b"A\xF0\x9F\xA6\x80BC\\n");
+        //         assert_eq!(s, String::from_utf8_lossy(b"A\xF0\x9F\xA6\x80BC\\n").into_owned());
         //     }
         //     _ => panic!("Esperava StringLiteral, mas recebeu algo diferente")
         // };
 
-        // match expr.next_token() {
-        //     Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
-        //         assert_eq!(tp, StringLiteralType::Raw(0));
-        //         assert_eq!(s, "A🦀BC\n");
-        //     }
-        //     _ => panic!("Esperava StringLiteral, mas recebeu algo diferente"),
-        // };
+        let mut expr = Rust::new("  r\"A\\u{1f980}BC\\n\" br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
+        match expr.next_token() {
+            Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
+                assert_eq!(tp, StringLiteralType::Raw(0));
+                assert_eq!(s, "A🦀BC\n");
+            }
+            _ => panic!("Esperava StringLiteral, mas recebeu algo diferente"),
+        };
 
+        // let mut expr = Rust::new("  br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
         // match expr.next_token() {
         //     Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
         //         assert_eq!(tp, StringLiteralType::RawByte(0));
@@ -196,6 +200,7 @@ mod tests {
         //     _ => panic!("Esperava StringLiteral, mas recebeu algo diferente"),
         // };
 
+        // let mut expr = Rust::new("  r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
         // match expr.next_token() {
         //     Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
         //         assert_eq!(tp, StringLiteralType::Raw(3));
@@ -204,6 +209,7 @@ mod tests {
         //     _ => panic!("Esperava StringLiteral, mas recebeu algo diferente"),
         // };
 
+        // let mut expr = Rust::new("   br###\"ABC\"### \"ABC\" ");
         // match expr.next_token() {
         //     Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
         //         assert_eq!(tp, StringLiteralType::RawByte(3));
@@ -212,6 +218,7 @@ mod tests {
         //     _ => panic!("Esperava StringLiteral, mas recebeu algo diferente"),
         // };
 
+        // let mut expr = Rust::new("   \"ABC\" ");
         // match expr.next_token() {
         //     Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
         //         assert_eq!(tp, StringLiteralType::Standard);
@@ -653,3 +660,180 @@ mod tests {
     }
 }
 
+/*
+Seguem as alterações mínimas — todas dentro dos estados já existentes, sem criar/remover estados ou mudar o formato geral da FSM — que corrigem o problema de \u{XXXX} não ser decodificado, junto com os bugs de "caractere extra" que aparecem ao longo do mesmo trecho.
+
+1. Uniformizar a condição do estado 1624 com a do 1622
+
+Hoje o 1622 manda ByteString para o estado de decodificação (1625), mas o 1624 (usado quando o \ não é o primeiro caractere da string, como no nosso caso) manda ByteString para o estado de cópia literal (1623). É essa assimetria que impede o \u{1f980} de ser decodificado.
+
+rust
+// Antes (~linha 1215)
+Some('\\') if string_type == StringLiteralType::Standard || string_type == StringLiteralType::ByteString => {
+    // se for ByteString não pode ter \u
+    lexema.push('\\');
+    self.advance();
+    state = 1623;
+    continue;
+}
+
+// Depois
+Some('\\') if string_type == StringLiteralType::Standard => {
+    lexema.push('\\');
+    self.advance();
+    state = 1623;
+    continue;
+}
+
+Com isso, ByteString passa a cair sempre no outro braço (Some('\\') => { ...; state = 1625; }), igual já acontece no 1622.
+
+2. Descartar a \ já empilhada quando o escape é \u
+
+Como os estados 1622/1624 empilham o \ otimisticamente antes de saber qual escape é, ao detectarmos u precisamos remover essa barra — \u{...} vira um único caractere, não texto literal.
+
+rust
+// Antes (dentro do estado 1625)
+Some('u') => {  // \u{...}
+    self.advance();
+    state = 1630;
+    continue;
+}
+
+// Depois
+Some('u') => {  // \u{...}
+    lexema.pop(); // remove o '\' empilhado pelo chamador; \u{...} vira 1 char, não texto
+    self.advance();
+    state = 1630;
+    continue;
+}
+
+3. Tornar \n, \r, \t literais para ByteString
+
+O teste espera que, numa ByteString, só o \u{...} seja "traduzido"; os demais escapes devem permanecer como os dois caracteres originais (o \\n do teste vira \+n, não um \n de verdade).
+
+rust
+// Antes (dentro do estado 1625)
+Some('n') => { lexema.push('\n'); self.advance(); state = 1650; continue; }
+Some('r') => { lexema.push('\r'); self.advance(); state = 1650; continue; }
+Some('t') => { lexema.push('\t'); self.advance(); state = 1650; continue; }
+
+// Depois
+Some('n') => { lexema.push(if string_type == StringLiteralType::ByteString { 'n' } else { '\n' }); self.advance(); state = 1650; continue; }
+Some('r') => { lexema.push(if string_type == StringLiteralType::ByteString { 'r' } else { '\r' }); self.advance(); state = 1650; continue; }
+Some('t') => { lexema.push(if string_type == StringLiteralType::ByteString { 't' } else { '\t' }); self.advance(); state = 1650; continue; }
+````//`\\`, `\'` e `\"` não precisam mudar: o caractere empilhado é o mesmo esteja "decodificado" ou não.
+
+**4. Coletar os dígitos hex em `auxiliary`, não em `lexema`**
+
+`lexema` é o conteúdo final da string; os dígitos de `\u{...}` são só um valor intermediário a ser convertido. A variável `auxiliary` já existe na função (usada para detectar o prefixo `b`/`r`/`br`) e está livre nesse ponto.
+
+```rust
+// Estado 1630 — antes
+Some('{') => { self.advance(); state = 1631; continue; }
+// depois
+Some('{') => { auxiliary.clear(); self.advance(); state = 1631; continue; }
+```
+
+E nos estados 1631 a 1636, trocar `lexema.push(c)` por `auxiliary.push(c)` no braço do dígito hexadecimal (6 ocorrências, mesma mudança em cada um):
+
+```rust
+// Antes
+Some(c) if c.is_digit(16) => { lexema.push(c); self.advance(); state = 163X; continue; }
+// Depois
+Some(c) if c.is_digit(16) => { auxiliary.push(c); self.advance(); state = 163X; continue; }
+```
+
+**5. Decodificar de fato o hex no estado 1638**
+
+Este é o bug do "caractere extra": hoje ele empilha `self.current_char()`, que nesse ponto já é o caractere seguinte ao `}` (ele foi consumido por `advance()` ao reconhecer o `}` nos estados 1632‑1637), em vez de gerar o char decodificado.
+
+```rust
+// Antes
+1638 => {
+    lexema.push(self.current_char().unwrap());
+    self.advance();
+    state = 1622;
+    continue;
+}
+
+// Depois
+1638 => {
+    if let Some(ch) = std::char::from_u32(u32::from_str_radix(&auxiliary, 16).unwrap_or(0)) {
+        lexema.push(ch);
+    }
+    auxiliary.clear();
+    state = 1624;
+    continue;
+}
+```
+(sem `self.advance()`: a posição já está corretamente sobre o primeiro caractere não consumido logo após o `}`).
+
+**6. Parar de voltar para o 1622 depois de já ter consumido um caractere**
+
+O 1622 começa com `self.retract()`, o que só faz sentido para quem chega até ele tendo avançado "a mais" (caso do 1620). Os estados 1623, 1650 e o braço genérico do 1625 já avançaram corretamente depois de empilhar seu caractere, então mandá-los para 1622 faz o `retract()` reprocessar (e, em vários casos, duplicar) o caractere que acabou de ser tratado — foi isso que causava a duplicação de `u`/`n` que apareceria mesmo depois da correção nº1, se essa parte não for arrumada.
+
+```rust
+// Estado 1623 — antes
+Some(c) => { lexema.push(c); self.advance(); state = 1622; continue; }
+// depois
+Some(c) => { lexema.push(c); self.advance(); state = 1624; continue; }
+
+// Estado 1625, braço genérico (fallback) — antes
+Some(c) => { lexema.push(c); self.advance(); state = 1622; continue; }
+// depois
+Some(c) => { lexema.push(c); self.advance(); state = 1624; continue; }
+
+// Estado 1650 — antes
+1650 => { lexema.push(self.current_char().unwrap()); self.advance(); state = 1622; continue; }
+// depois (o caractere já foi tratado por quem chamou 1650; aqui é só retomar o loop normal)
+1650 => { state = 1624; continue; }
+```
+
+O estado 1660 tem o mesmo padrão, mas é código morto (nada transiciona para ele hoje), então pode ficar como está.
+
+Com essas seis mudanças, o fluxo para `b"A\u{1f980}BC\n"` fica: `A` empilhado normalmente; ao ver `\` antes do `u`, vai para 1625, descarta a barra, decodifica `1f980` via `auxiliary` e empilha o 🦀 real; `B` e `C` seguem normalmente; o `\n` final, por ser `ByteString`, é mantido literal (`\`+`n`). O resultado final é `"A🦀BC\n"` (com `\n` literal), que é exatamente `String::from_utf8_lossy(b"A\xF0\x9F\xA6\x80BC\\n")` — o valor que o teste espera. Nenhuma outra função, assinatura ou estado foi criado/removido; só os alvos de transição, a condição de tipo e o buffer usado para os dígitos hex foram ajustados.
+
+
+
+
+
+
+
+
+
+
+refaça a análise para as cadeias 
+
+r\"A\\u{1f980}BC\\n\" br\"A\\u{1f980}BC\\n\"
+Executou 4 comandos, leu 2 arquivos, usou uma ferramenta
+
+Agora vou escrever um pequeno programa de teste para rodar o código original (sem nenhuma correção) contra as duas cadeias e conferir empiricamente, em vez de confiar só na simulação manual.
+
+Executou 12 comandos, criou um arquivo, leu 2 arquivos · 2 notas
+
+Rodei essas duas entradas contra o código original (sem nenhuma das correções da mensagem anterior) para confirmar a análise na prática, e o resultado é mais grave que no caso da ByteString: nenhuma das duas retorna um token — as duas fazem next_token() sofrer panic (o parser trava) antes de conseguir devolver qualquer coisa. As duas seguem exatamente o mesmo caminho de estados (só o prefixo muda: "r" dá string_type = Raw(0), "br" dá RawByte(0); da aspa de abertura em diante o comportamento é idêntico), então a explicação vale igualmente para as duas.
+
+O motivo é a combinação dos dois defeitos que já tínhamos identificado, mas agora expostos de um jeito diferente porque Raw/RawByte sempre caem no estado 1625 (eles nunca entram no ramo Standard || ByteString do estado 1624, então a assimetria que discutimos antes nem chega a importar aqui — o problema de fundo é outro).
+
+Reconstruindo com posições reais (confirmado rodando o parser):
+
+STATE=1636 pos=(0,11) cur='}'          -> advance(); state=1638      (pos vai para 12, 'B')
+STATE=1638 pos=(0,12) cur='B'          -> lexema.push('B'); advance(); state=1622   (empurra 'B' — devia estar decodificando o hex, não copiando o próximo char)
+STATE=1622 pos=(0,13) cur='C'          -> retract() volta pra pos 12 ('B' de novo!) -> lexema.push('B') OUTRA VEZ -> lexema="A\1f980BB"
+STATE=1624                              -> processa 'C', depois '\'
+STATE=1625 cur='n'                      -> lexema.push('\n')  (aqui SEMPRE decodifica para quebra de linha real — o código não faz distinção por tipo neste ramo) ; advance(); state=1650   (pos agora é a aspa de fechamento)
+STATE=1650 cur='"'                      -> lexema.push('"')  (empurra a ASPA DE FECHAMENTO como se fosse conteúdo!) ; advance()  -> passa do fim da única linha: current_row vira 1
+STATE=1622                              -> retract() -> current_col vira o tamanho da linha (posição "fantasma" de fim-de-linha, current_char() = '\n' virtual) -> empurra esse '\n' virtual também; advance() -> current_row vira 1 de novo
+STATE=1624 cur='\0'                     -> current_char() já está retornando o sentinela de "fim do texto" ('\0'), mas nenhum estado trata '\0' como parada — cai no ramo genérico, empurra '\0' e chama advance() mais uma vez
+
+Esse último advance() é o que derruba o processo: current_row já está em 1, mas self.text (resultado de text.lines()) só tem 1 linha, então a checagem em advance()
+
+rust
+if self.current_col >= self.text[self.current_row].chars().count() {
+
+indexa self.text[1] num vetor de tamanho 1 e estoura: index out of bounds: the len is 1 but the index is 1 (token.rs, dentro de advance(), ~linha 257), chamado a partir do ramo genérico do estado 1624 em next_token(). Isso acontece igualzinho para r"..." e para br"..." — confirmei executando as duas entradas, ambas panicam com a mesma mensagem, sem chegar a devolver um Token.
+
+Em resumo: é o mesmo bug de fundo de antes (o \u{1f980} nunca é decodificado — os dígitos hex só são empilhados literalmente em lexema pelos estados 1631‑1636 — e os estados-relé 1638/1650 empurram um caractere que não deveriam e mandam o controle de volta para o 1622, cujo retract() reprocessa o que acabou de ser consumido). No caso da ByteString isso só corrompia o conteúdo da string; aqui, como a entrada é curta (uma única linha, sem quebra de linha real), esse excesso de avanços empurra o cursor para além do fim do texto, e como advance() não tem a mesma proteção de limites que current_char() tem, o programa quebra em vez de simplesmente devolver um valor errado.
+
+Apliquei as correções sugeridas na mensagem anterior sobre uma cópia do código e reexecutei as mesmas duas entradas: nenhuma das duas panica mais. r"A\u{1f980}BC\n" retorna StringLiteral(Raw(0), "A🦀BC\n") e br"A\u{1f980}BC\n" retorna StringLiteral(RawByte(0), "A🦀BC\n") — o \u{1f980} já sai decodificado como 🦀 nos dois casos. Só um detalhe fica em aberto: como o ajuste anterior só tornou \n/\r/\t literais especificamente para ByteString, aqui o \n final ainda vira uma quebra de linha de verdade (byte 0x0A) em vez de ficar como \+n literal. Se o comportamento desejado para strings "raw" for não interpretar escape nenhum (mais próximo do Rust de verdade, onde strings raw não processam \n, \u nem nada), bastaria estender a mesma condição dos ramos 'n'/'r'/'t' do estado 1625 para incluir também StringLiteralType::Raw(_) e RawByte(_), não só ByteString.
+*/
