@@ -153,81 +153,182 @@ mod tests {
         let token = expr.next_token();        assert_eq!(token, Token::Character(Tag::CHARACTER, 0, 73, '?'));
     }
 
-#[test]
-    fn test_string_tokens() {
-        // let mut expr = Rust::new(" b r br   b\"A\\u{1f980}BC\\n\" r\"A\\u{1f980}BC\\n\" br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
-        // match expr.next_token() {
-        //     Token::Identifier(Tag::IDENTIFIER, _, _, id) => assert_eq!(id, "b"),
-        //     _ => panic!("Esperava Identifier, mas recebeu algo diferente"),
-        // };
+    // #[test]
+    // fn test_string_tokens() {
+    //     // let mut expr = Rust::new(" b r br   b\"A\\u{1f980}BC\\n\" r\"A\\u{1f980}BC\\n\" br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
+    //     // match expr.next_token() {
+    //     //     Token::Identifier(Tag::IDENTIFIER, _, _, id) => assert_eq!(id, "b"),
+    //     //     _ => panic!("Esperava Identifier, mas recebeu algo diferente"),
+    //     // };
 
-        // let mut expr = Rust::new(" r br   b\"A\\u{1f980}BC\\n\" r\"A\\u{1f980}BC\\n\" br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
-        // match expr.next_token() {
-        //     Token::Identifier(Tag::IDENTIFIER, _, _, id) => assert_eq!(id, "r"),
-        //     _ => panic!("Esperava Identifier, mas recebeu algo diferente"),
-        // };
+    //     // let mut expr = Rust::new(" r br   b\"A\\u{1f980}BC\\n\" r\"A\\u{1f980}BC\\n\" br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
+    //     // match expr.next_token() {
+    //     //     Token::Identifier(Tag::IDENTIFIER, _, _, id) => assert_eq!(id, "r"),
+    //     //     _ => panic!("Esperava Identifier, mas recebeu algo diferente"),
+    //     // };
 
-        // let mut expr = Rust::new("  br   b\"A\\u{1f980}BC\\n\" r\"A\\u{1f980}BC\\n\" br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
-        // match expr.next_token() {
-        //     Token::Identifier(Tag::IDENTIFIER, _, _, id) => assert_eq!(id, "br"),
-        //     _ => panic!("Esperava Identifier, mas recebeu algo diferente"),
-        // };
+    //     // let mut expr = Rust::new("  br   b\"A\\u{1f980}BC\\n\" r\"A\\u{1f980}BC\\n\" br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
+    //     // match expr.next_token() {
+    //     //     Token::Identifier(Tag::IDENTIFIER, _, _, id) => assert_eq!(id, "br"),
+    //     //     _ => panic!("Esperava Identifier, mas recebeu algo diferente"),
+    //     // };
 
-        // let mut expr = Rust::new("  b\"A\\u{1f980}BC\\n\" r\"A\\u{1f980}BC\\n\" br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
-        // match expr.next_token() {
-        //     Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
-        //         assert_eq!(tp, StringLiteralType::ByteString);
-        //         assert_eq!(s, String::from_utf8_lossy(b"A\xF0\x9F\xA6\x80BC\\n").into_owned());
-        //     }
-        //     _ => panic!("Esperava StringLiteral, mas recebeu algo diferente")
-        // };
+    //     let mut expr = Rust::new("  b\"A\\u{1f980}BC\\n\" r\"A\\u{1f980}BC\\n\" br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
+    //     match expr.next_token() {
+    //         Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
+    //             assert_eq!(tp, StringLiteralType::ByteString);
+    //             assert_eq!(s, String::from_utf8_lossy(b"A\xF0\x9F\xA6\x80BC\\n").into_owned());
+    //         }
+    //         _ => panic!("Esperava StringLiteral, mas recebeu algo diferente")
+    //     };
 
+    //     // let mut expr = Rust::new("  r\"A\\u{1f980}BC\\n\" br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
+    //     // match expr.next_token() {
+    //     //     Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
+    //     //         assert_eq!(tp, StringLiteralType::Raw(0));
+    //     //         assert_eq!(s, "A🦀BC\n");
+    //     //     }
+    //     //     _ => panic!("Esperava StringLiteral, mas recebeu algo diferente"),
+    //     // };
+
+    //     // let mut expr = Rust::new("  br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
+    //     // match expr.next_token() {
+    //     //     Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
+    //     //         assert_eq!(tp, StringLiteralType::RawByte(0));
+    //     //         assert_eq!(s, "A🦀BC\n");
+    //     //     }
+    //     //     _ => panic!("Esperava StringLiteral, mas recebeu algo diferente"),
+    //     // };
+
+    //     // let mut expr = Rust::new("  r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
+    //     // match expr.next_token() {
+    //     //     Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
+    //     //         assert_eq!(tp, StringLiteralType::Raw(3));
+    //     //         assert_eq!(s, "ABC");
+    //     //     }
+    //     //     _ => panic!("Esperava StringLiteral, mas recebeu algo diferente"),
+    //     // };
+
+    //     // let mut expr = Rust::new("   br###\"ABC\"### \"ABC\" ");
+    //     // match expr.next_token() {
+    //     //     Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
+    //     //         assert_eq!(tp, StringLiteralType::RawByte(3));
+    //     //         assert_eq!(s, "ABC" );
+    //     //     }
+    //     //     _ => panic!("Esperava StringLiteral, mas recebeu algo diferente"),
+    //     // };
+
+    //     // let mut expr = Rust::new("   \"ABC\" ");
+    //     // match expr.next_token() {
+    //     //     Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
+    //     //         assert_eq!(tp, StringLiteralType::Standard);
+    //     //         assert_eq!(s, "ABC");
+    //     //     }
+    //     //     _ => panic!("Esperava StringLiteral, mas recebeu algo diferente"),
+    //     // };
+
+    // }
+
+    #[test]
+    fn test_string_tokens_b() {
+        let mut expr = Rust::new(" b r br   b\"A\\u{1f980}BC\\n\" r\"A\\u{1f980}BC\\n\" br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
+        match expr.next_token() {
+            Token::Identifier(Tag::IDENTIFIER, _, _, id) => assert_eq!(id, "b"),
+            _ => panic!("Esperava Identifier, mas recebeu algo diferente"),
+        };
+    }
+
+    #[test]
+    fn test_string_tokens_r() {
+        let mut expr = Rust::new(" r br   b\"A\\u{1f980}BC\\n\" r\"A\\u{1f980}BC\\n\" br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
+        match expr.next_token() {
+            Token::Identifier(Tag::IDENTIFIER, _, _, id) => assert_eq!(id, "r"),
+            _ => panic!("Esperava Identifier, mas recebeu algo diferente"),
+        };
+    }
+
+    #[test]
+    fn test_string_tokens_b4() {
+        let mut expr = Rust::new("  br   b\"A\\u{1f980}BC\\n\" r\"A\\u{1f980}BC\\n\" br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
+        match expr.next_token() {
+            Token::Identifier(Tag::IDENTIFIER, _, _, id) => assert_eq!(id, "br"),
+            _ => panic!("Esperava Identifier, mas recebeu algo diferente"),
+        };
+    }
+
+    #[test]
+    fn test_string_tokens_b1() {
+        let mut expr = Rust::new("  b\"A\\u{1f980}BC\\n\" r\"A\\u{1f980}BC\\n\" br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
+        match expr.next_token() {
+            Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
+                assert_eq!(tp, StringLiteralType::ByteString);
+                assert_eq!(s, String::from_utf8_lossy(b"A\xF0\x9F\xA6\x80BC\\n").into_owned());
+            }
+            _ => panic!("Esperava StringLiteral, mas recebeu algo diferente")
+        };
+    }
+
+    #[test]
+    fn test_string_tokens_r1() {
         let mut expr = Rust::new("  r\"A\\u{1f980}BC\\n\" br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
         match expr.next_token() {
             Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
                 assert_eq!(tp, StringLiteralType::Raw(0));
+                assert_eq!(s, r"A\u{1f980}BC\n");
+            }
+            _ => panic!("Esperava StringLiteral, mas recebeu algo diferente"),
+        };
+    }
+
+    #[test]
+    fn test_string_tokens_br1() {
+        let mut expr = Rust::new("  br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
+        match expr.next_token() {
+            Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
+                assert_eq!(tp, StringLiteralType::RawByte(0));
                 assert_eq!(s, "A🦀BC\n");
             }
             _ => panic!("Esperava StringLiteral, mas recebeu algo diferente"),
         };
-
-        // let mut expr = Rust::new("  br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
-        // match expr.next_token() {
-        //     Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
-        //         assert_eq!(tp, StringLiteralType::RawByte(0));
-        //         assert_eq!(s, "A🦀BC\n");
-        //     }
-        //     _ => panic!("Esperava StringLiteral, mas recebeu algo diferente"),
-        // };
-
-        // let mut expr = Rust::new("  r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
-        // match expr.next_token() {
-        //     Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
-        //         assert_eq!(tp, StringLiteralType::Raw(3));
-        //         assert_eq!(s, "ABC");
-        //     }
-        //     _ => panic!("Esperava StringLiteral, mas recebeu algo diferente"),
-        // };
-
-        // let mut expr = Rust::new("   br###\"ABC\"### \"ABC\" ");
-        // match expr.next_token() {
-        //     Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
-        //         assert_eq!(tp, StringLiteralType::RawByte(3));
-        //         assert_eq!(s, "ABC" );
-        //     }
-        //     _ => panic!("Esperava StringLiteral, mas recebeu algo diferente"),
-        // };
-
-        // let mut expr = Rust::new("   \"ABC\" ");
-        // match expr.next_token() {
-        //     Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
-        //         assert_eq!(tp, StringLiteralType::Standard);
-        //         assert_eq!(s, "ABC");
-        //     }
-        //     _ => panic!("Esperava StringLiteral, mas recebeu algo diferente"),
-        // };
-
     }
+
+    #[test]
+    fn test_string_tokens_r___() {
+        let mut expr = Rust::new("  r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
+        match expr.next_token() {
+            Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
+                assert_eq!(tp, StringLiteralType::Raw(3));
+                assert_eq!(s, "ABC");
+            }
+            _ => panic!("Esperava StringLiteral, mas recebeu algo diferente"),
+        };
+    }
+
+    #[test]
+    fn test_string_tokens_br___() {
+        let mut expr = Rust::new("   br###\"ABC\"### \"ABC\" ");
+        match expr.next_token() {
+            Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
+                assert_eq!(tp, StringLiteralType::RawByte(3));
+                assert_eq!(s, "ABC" );
+            }
+            _ => panic!("Esperava StringLiteral, mas recebeu algo diferente"),
+        };
+    }
+
+    #[test]
+    fn test_string_tokens_abc() {
+        let mut expr = Rust::new("   \"ABC\" ");
+        match expr.next_token() {
+            Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
+                assert_eq!(tp, StringLiteralType::Standard);
+                assert_eq!(s, "ABC");
+            }
+            _ => panic!("Esperava StringLiteral, mas recebeu algo diferente"),
+        };
+    }
+
+
 
     #[test]
     fn test_peek_number_decimal_integers() {
@@ -811,7 +912,9 @@ Agora vou escrever um pequeno programa de teste para rodar o código original (s
 
 Executou 12 comandos, criou um arquivo, leu 2 arquivos · 2 notas
 
-Rodei essas duas entradas contra o código original (sem nenhuma das correções da mensagem anterior) para confirmar a análise na prática, e o resultado é mais grave que no caso da ByteString: nenhuma das duas retorna um token — as duas fazem next_token() sofrer panic (o parser trava) antes de conseguir devolver qualquer coisa. As duas seguem exatamente o mesmo caminho de estados (só o prefixo muda: "r" dá string_type = Raw(0), "br" dá RawByte(0); da aspa de abertura em diante o comportamento é idêntico), então a explicação vale igualmente para as duas.
+Rodei essas duas entradas contra o código original (sem nenhuma das correções da mensagem anterior) para confirmar a análise na prática, e o resultado é mais grave que no caso da ByteString: 
+nenhuma das duas retorna um token — as duas fazem next_token() sofrer panic (o parser trava) antes de conseguir devolver qualquer coisa. 
+As duas seguem exatamente o mesmo caminho de estados (só o prefixo muda: "r" dá string_type = Raw(0), "br" dá RawByte(0); da aspa de abertura em diante o comportamento é idêntico), então a explicação vale igualmente para as duas.
 
 O motivo é a combinação dos dois defeitos que já tínhamos identificado, mas agora expostos de um jeito diferente porque Raw/RawByte sempre caem no estado 1625 (eles nunca entram no ramo Standard || ByteString do estado 1624, então a assimetria que discutimos antes nem chega a importar aqui — o problema de fundo é outro).
 
@@ -835,5 +938,9 @@ indexa self.text[1] num vetor de tamanho 1 e estoura: index out of bounds: the l
 
 Em resumo: é o mesmo bug de fundo de antes (o \u{1f980} nunca é decodificado — os dígitos hex só são empilhados literalmente em lexema pelos estados 1631‑1636 — e os estados-relé 1638/1650 empurram um caractere que não deveriam e mandam o controle de volta para o 1622, cujo retract() reprocessa o que acabou de ser consumido). No caso da ByteString isso só corrompia o conteúdo da string; aqui, como a entrada é curta (uma única linha, sem quebra de linha real), esse excesso de avanços empurra o cursor para além do fim do texto, e como advance() não tem a mesma proteção de limites que current_char() tem, o programa quebra em vez de simplesmente devolver um valor errado.
 
-Apliquei as correções sugeridas na mensagem anterior sobre uma cópia do código e reexecutei as mesmas duas entradas: nenhuma das duas panica mais. r"A\u{1f980}BC\n" retorna StringLiteral(Raw(0), "A🦀BC\n") e br"A\u{1f980}BC\n" retorna StringLiteral(RawByte(0), "A🦀BC\n") — o \u{1f980} já sai decodificado como 🦀 nos dois casos. Só um detalhe fica em aberto: como o ajuste anterior só tornou \n/\r/\t literais especificamente para ByteString, aqui o \n final ainda vira uma quebra de linha de verdade (byte 0x0A) em vez de ficar como \+n literal. Se o comportamento desejado para strings "raw" for não interpretar escape nenhum (mais próximo do Rust de verdade, onde strings raw não processam \n, \u nem nada), bastaria estender a mesma condição dos ramos 'n'/'r'/'t' do estado 1625 para incluir também StringLiteralType::Raw(_) e RawByte(_), não só ByteString.
+Apliquei as correções sugeridas na mensagem anterior sobre uma cópia do código e reexecutei as mesmas duas entradas: nenhuma das duas panica mais. 
+r"A\u{1f980}BC\n" retorna StringLiteral(Raw(0), "A🦀BC\n") e br"A\u{1f980}BC\n" retorna StringLiteral(RawByte(0), "A🦀BC\n") — o \u{1f980} já sai decodificado como 🦀 nos dois casos. 
+Só um detalhe fica em aberto: como o ajuste anterior só tornou \n/\r/\t literais especificamente para ByteString, aqui o \n final ainda vira uma quebra de linha de verdade (byte 0x0A) 
+em vez de ficar como \+n literal. Se o comportamento desejado para strings "raw" for não interpretar escape nenhum (mais próximo do Rust de verdade, onde strings raw não processam \n, \u 
+nem nada), bastaria estender a mesma condição dos ramos 'n'/'r'/'t' do estado 1625 para incluir também StringLiteralType::Raw(_) e RawByte(_), não só ByteString.
 */

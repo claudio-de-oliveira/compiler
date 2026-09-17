@@ -1159,6 +1159,16 @@ impl<'a> Scanner for Rust<'a> {
                     state = 1622;
                     continue;
                 }
+/*
+STATE=1636 pos=(0,11) cur='}'          -> advance(); state=1638      (pos vai para 12, 'B')
+STATE=1638 pos=(0,12) cur='B'          -> lexema.push('B'); advance(); state=1622   (empurra 'B' — devia estar decodificando o hex, não copiando o próximo char)
+STATE=1622 pos=(0,13) cur='C'          -> retract() volta pra pos 12 ('B' de novo!) -> lexema.push('B') OUTRA VEZ -> lexema="A\1f980BB"
+STATE=1624                              -> processa 'C', depois '\'
+STATE=1625 cur='n'                      -> lexema.push('\n')  (aqui SEMPRE decodifica para quebra de linha real — o código não faz distinção por tipo neste ramo) ; advance(); state=1650   (pos agora é a aspa de fechamento)
+STATE=1650 cur='"'                      -> lexema.push('"')  (empurra a ASPA DE FECHAMENTO como se fosse conteúdo!) ; advance()  -> passa do fim da única linha: current_row vira 1
+STATE=1622                              -> retract() -> current_col vira o tamanho da linha (posição "fantasma" de fim-de-linha, current_char() = '\n' virtual) -> empurra esse '\n' virtual também; advance() -> current_row vira 1 de novo
+STATE=1624 cur='\0'                     -> current_char() já está retornando o sentinela de "fim do texto" ('\0'), mas nenhum estado trata '\0' como parada — cai no ramo genérico, empurra '\0' e chama advance() mais uma vez
+ */                
                 1622 => {
                     self.retract();
                     match self.current_char() {
@@ -1168,7 +1178,7 @@ impl<'a> Scanner for Rust<'a> {
                             continue;
                         }
                         //Some('\\') if string_type == StringLiteralType::Standard || string_type == StringLiteralType::ByteString => {
-                        Some('\\') if string_type == StringLiteralType::Standard => {
+                        Some('\\') if matches!(string_type, StringLiteralType::Standard | StringLiteralType::ByteString) => {
                             lexema.push('\\');
                             self.advance();
                             state = 1623;
@@ -1212,7 +1222,7 @@ impl<'a> Scanner for Rust<'a> {
                             state = 1680;
                             continue;
                         }
-                        Some('\\') if string_type == StringLiteralType::Standard => {
+                        Some('\\') if matches!(string_type, StringLiteralType::Standard | StringLiteralType::ByteString) => {
                             lexema.push('\\');
                             self.advance();
                             state = 1623;
