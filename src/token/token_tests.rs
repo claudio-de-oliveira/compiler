@@ -258,7 +258,7 @@ mod tests {
 
     #[test]
     fn test_string_tokens_b1() {
-        let mut expr = Rust::new("  b\"A\\u{1f980}BC\\n\" r\"A\\u{1f980}BC\\n\" br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
+        let mut expr = Rust::new("  b\"A🦀BC\\n\" r\"A\\u{1f980}BC\\n\" br\"A\\u{1f980}BC\\n\"   r###\"ABC\"### br###\"ABC\"### \"ABC\" ");
         match expr.next_token() {
             Token::StringLiteral(Tag::STRING, _, _, tp, s) => {
                 assert_eq!(tp, StringLiteralType::ByteString);

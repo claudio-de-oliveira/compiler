@@ -239,15 +239,15 @@ impl<'a> Rust<'a> {
     }
 
     #[inline]
-    fn current_char(&self) -> Option<char> {
+    fn current_char(&self) -> char {
         if self.current_row >= self.text.len() {
-            return Some('\0');
+            return '\0';
         } 
 
         if self.current_col >= self.text[self.current_row].chars().count() {
-            return Some('\n');
+            return '\n';
         } else {
-            self.text[self.current_row].chars().nth(self.current_col)
+            self.text[self.current_row].chars().nth(self.current_col).unwrap()
         }
     }
 
@@ -277,15 +277,15 @@ impl<'a> Rust<'a> {
         let mut comment = String::new();
         loop {
             match self.current_char() {
-                Some('\n') => {
+                '\n' => {
                     return comment;
                 }
-                Some(c) => {
+                '\0' => {
+                    return comment;
+                }
+                c => {
                     comment.push(c);
                     self.advance();
-                }
-                None => {
-                    return comment;
                 }
             }
         }
@@ -300,38 +300,35 @@ impl<'a> Rust<'a> {
             match state {
                 0 => {
                     match self.current_char() {
-                        Some('*') => {
+                        '*' => {
                             self.advance();
                             state = 1;
                             continue;
                         }
-                        Some('/') => {
+                        '/' => {
                             self.advance();
                             state = 3;
                             continue;
                         }
-                        Some('#') => {
+                        '#' => {
                             todo!();
                         }
-                        Some(c) => {
+                        c => {
                             text.push(c);
                             self.advance();
                             state = 0;
                             continue;
                         }
-                        None => {
-                            todo!();
-                        }
                     }
                 }
                 1 => {
                     match self.current_char() {
-                        Some('/') if counter == 0 => {
+                        '/' if counter == 0 => {
                             self.advance();
                             state = 2;
                             continue;
                         }
-                        Some('/') => {
+                        '/' => {
                             text.push('*');
                             text.push('/');
                             counter -= 1;
@@ -339,14 +336,14 @@ impl<'a> Rust<'a> {
                             state = 0;
                             continue;
                         }
-                        Some(c) => {
+                        '\0' => {
+                            todo!();
+                        }
+                        c => {
                             text.push(c);
                             self.advance();
                             state = 0;
                             continue;
-                        }
-                        None => {
-                            todo!();
                         }
                     }
                 }
@@ -355,28 +352,28 @@ impl<'a> Rust<'a> {
                 }
                 3 => {
                     match self.current_char() {
-                        Some('*') => {
+                        '*' => {
                             counter += 1;
                             self.advance();
                             state = 0;
                             continue;
                         }
-                        Some('/') => {
+                        '/' => {
                             self.advance();
                             state = 3;
                             continue;
                         }
-                        Some('#') => {
+                        '#' => {
                             todo!();
                         }
-                        Some(c) => {
+                        '\0' => {
+                            todo!();
+                        }
+                        c => {
                             text.push(c);
                             self.advance();
                             state = 0;
                             continue;
-                        }
-                        None => {
-                            todo!();
                         }
                     }
                 }
@@ -400,178 +397,180 @@ impl<'a> Scanner for Rust<'a> {
             match state {
                 0 => {
                     match self.current_char() {
-                        Some(c) if c.is_whitespace() => {
+                        c if c.is_whitespace() => {
                             self.advance();
                             state = 0;
                             continue;
                         }
-                        Some('b') => {
+                        'b' => {
                             lexema.push('b');
                             auxiliary.push('b');
                             self.advance();
                             state = 160;
                             continue;
                         }
-                        Some('r') => {
+                        'r' => {
                             lexema.push('r');
                             auxiliary.push('r');
                             self.advance();
                             state = 161;
                             continue;
                         }
-                        Some(c) if c.is_alphabetic() => {
+                        c if c.is_alphabetic() => {
                             lexema.push(c);
                             self.advance();
                             state = 10;
                             continue;
                         }
-                        Some('_') => {
+                        '_' => {
                             lexema.push('_');
                             self.advance();
                             state = 10;
                             continue;
                         }
-                        Some(c) if c.is_digit(10) => {
+                        c if c.is_digit(10) => {
                             lexema.push(c);
                             self.advance();
                             state = 1;
                             continue;
                         }
-                        Some('(') => {
+                        '(' => {
                             self.advance();
                             state = 7;
                             continue;
                         }
-                        Some(')') => {
+                        ')' => {
                             self.advance();
                             state = 8;
                             continue;
                         }
-                        Some('!') => {
+                        '!' => {
                             self.advance();
                             state = 100;
                             continue;
                         }
-                        Some('%') => {
+                        '%' => {
                             self.advance();
                             state = 101;
                             continue;
                         }
-                        Some('&') => {
+                        '&' => {
                             self.advance();
                             state = 102;
                             continue;
                         }
-                        Some('*') => {
+                        '*' => {
                             self.advance();
                             state = 103;
                             continue;
                         }
-                        Some('+') => {
+                        '+' => {
                             self.advance();
                             state = 104;
                             continue;
                         }
-                        Some(',') => {
+                        ',' => {
                             self.advance();
                             state = 105;
                             continue;
                         }
-                        Some('-') => {
+                        '-' => {
                             self.advance();
                             state = 106;
                             continue;
                         }
-                        Some('.') => {
+                        '.' => {
                             self.advance();
                             state = 107;
                             continue;
                         }
-                        Some('/') => {
+                        '/' => {
                             self.advance();
                             state = 108;
                             continue;
                         }
-                        Some(':') => {
+                        ':' => {
                             self.advance();
                             state = 109;
                             continue;
                         }
-                        Some(';') => {
+                        ';' => {
                             self.advance();
                             state = 110;
                             continue;
                         }
-                        Some('<') => {
+                        '<' => {
                             self.advance();
                             state = 111;
                             continue;
                         }
-                        Some('=') => {
+                        '=' => {
                             self.advance();
                             state = 112;
                             continue;
                         }
-                        Some('>') => {
+                        '>' => {
                             self.advance();
                             state = 113;
                             continue;
                         }
-                        Some('@') => {
+                        '@' => {
                             self.advance();
                             state = 114;
                             continue;
                         }
-                        Some('^') => {
+                        '^' => {
                             self.advance();
                             state = 115;
                             continue;
                         }
-                        Some('|') => {
+                        '|' => {
                             self.advance();
                             state = 116;
                             continue;
                         }
-                        Some('?') => {
+                        '?' => {
                             self.advance();
                             state = 117;
                             continue;
                         }
-                        Some('\'') => {
+                        '\'' => {
                             println!("Veio o primeiro apóstrofe");
                             self.advance();
                             state = 150;
                             continue;
                         }
-                        Some('\"') => {
+                        '\"' => {
                             println!("Veio a primeira aspas duplas");
                             self.advance();
                             state = 1620;
                             continue;
                         }
-                        Some('#') => {
+                        '#' => {
                             self.advance();
                             state = 9;
                             continue;
                         }
-                        Some(c) => {
+                        '\0' => {
+                            todo!();
+                        }
+                        c => {
                             lexema.push(c);
                             self.advance();
                             state = 999;
                             continue;
                         }
-                        None => todo!(),
                     }
                 }
                 1 => {
                     match self.current_char() {
-                        Some(c) if c.is_digit(10) => {
+                        c if c.is_digit(10) => {
                             lexema.push(c);
                             self.advance();
                             state = 1;
                             continue;
                         }
-                        Some('_') => {
+                        '_' => {
                             self.advance();
                             state = 1;
                             continue;
@@ -598,19 +597,19 @@ impl<'a> Scanner for Rust<'a> {
                 }
                 10 => {
                     match self.current_char() {
-                        Some(c) if c.is_alphanumeric() => {
+                        c if c.is_alphanumeric() => {
                             lexema.push(c);
                             self.advance();
                             state = 10;
                             continue;
                         }
-                        Some('_') => {
+                        '_' => {
                             lexema.push('_');
                             self.advance();
                             state = 13;
                             continue;
                         }
-                        Some('!') => {
+                        '!' => {
                             lexema.push('!');
                             self.advance();
                             state = 12;
@@ -651,7 +650,7 @@ impl<'a> Scanner for Rust<'a> {
 
                 100 => {
                     match self.current_char() {
-                        Some('=') => {
+                        '=' => {
                             self.advance();
                             state = 1001;
                             continue;
@@ -667,7 +666,7 @@ impl<'a> Scanner for Rust<'a> {
 
                 101 => {
                     match self.current_char() {
-                        Some('=') => {
+                        '=' => {
                             self.advance();
                             state = 1011;
                             continue;
@@ -683,12 +682,12 @@ impl<'a> Scanner for Rust<'a> {
 
                 102 => {
                     match self.current_char() {
-                        Some('=') => {
+                        '=' => {
                             self.advance();
                             state = 1021;
                             continue;
                         }
-                        Some('&') => {
+                        '&' => {
                             self.advance();
                             state = 1022;
                             continue;
@@ -707,7 +706,7 @@ impl<'a> Scanner for Rust<'a> {
 
                 103 => {
                     match self.current_char() {
-                        Some('=') => {
+                        '=' => {
                             self.advance();
                             state = 1031;
                             continue;
@@ -723,7 +722,7 @@ impl<'a> Scanner for Rust<'a> {
 
                 104 => {
                     match self.current_char() {
-                        Some('=') => {
+                        '=' => {
                             self.advance();
                             state = 1041;
                             continue;
@@ -743,12 +742,12 @@ impl<'a> Scanner for Rust<'a> {
 
                 106 => {
                     match self.current_char() {
-                        Some('=') => {
+                        '=' => {
                             self.advance();
                             state = 1061;
                             continue;
                         }
-                        Some('>') => {
+                        '>' => {
                             self.advance();
                             state = 1062;
                             continue;
@@ -767,7 +766,7 @@ impl<'a> Scanner for Rust<'a> {
 
                 107 => {
                     match self.current_char() {
-                        Some('.') => {
+                        '.' => {
                             self.advance();
                             state = 1071;
                             continue;
@@ -779,7 +778,7 @@ impl<'a> Scanner for Rust<'a> {
                 }
                 1071 => {
                     match self.current_char() {
-                        Some('=') => {
+                        '=' => {
                             self.advance();
                             state = 10711;
                             continue;
@@ -795,17 +794,17 @@ impl<'a> Scanner for Rust<'a> {
 
                 108 => {
                     match self.current_char() {
-                        Some('/') => {
+                        '/' => {
                             self.advance();
                             state = 1082;
                             continue;
                         }
-                        Some('*') => {
+                        '*' => {
                             self.advance();
                             state = 1085;
                             continue;
                         }
-                        Some('=') => {
+                        '=' => {
                             self.advance();
                             state = 1081;
                             continue;
@@ -820,12 +819,12 @@ impl<'a> Scanner for Rust<'a> {
                 }
                 1082 => {
                     match self.current_char() {
-                        Some('/') => {
+                        '/' => {
                             self.advance();
                             state = 1083;
                             continue;
                         }
-                        Some('!') => {
+                        '!' => {
                             self.advance();
                             state = 1084;
                             continue;
@@ -863,12 +862,12 @@ impl<'a> Scanner for Rust<'a> {
 
                 111 => {
                     match self.current_char() {
-                        Some('=') => {
+                        '=' => {
                             self.advance();
                             state = 1111;
                             continue;
                         }
-                        Some('<') => {
+                        '<' => {
                             self.advance();
                             state = 1112;
                             continue;
@@ -883,7 +882,7 @@ impl<'a> Scanner for Rust<'a> {
                 }
                 1112 => {
                     match self.current_char() {
-                        Some('=') => {
+                        '=' => {
                             self.advance();
                             state = 11121;
                             continue;
@@ -899,12 +898,12 @@ impl<'a> Scanner for Rust<'a> {
 
                 112 => {
                     match self.current_char() {
-                        Some('=') => {
+                        '=' => {
                             self.advance();
                             state = 11211;
                             continue;
                         }
-                        Some('>') => {
+                        '>' => {
                             self.advance();
                             state = 11212;
                             continue;
@@ -923,12 +922,12 @@ impl<'a> Scanner for Rust<'a> {
 
                 113 => {
                     match self.current_char() {
-                        Some('=') => {
+                        '=' => {
                             self.advance();
                             state = 1131;
                             continue;
                         }
-                        Some('>') => {
+                        '>' => {
                             self.advance();
                             state = 1132;
                             continue;
@@ -943,7 +942,7 @@ impl<'a> Scanner for Rust<'a> {
                 }
                 1132 => {
                     match self.current_char() {
-                        Some('=') => {
+                        '=' => {
                             self.advance();
                             state = 11311;
                             continue;
@@ -963,7 +962,7 @@ impl<'a> Scanner for Rust<'a> {
 
                 115 => {
                     match self.current_char() {
-                        Some('=') => {
+                        '=' => {
                             self.advance();
                             state = 1151;
                             continue;
@@ -979,12 +978,12 @@ impl<'a> Scanner for Rust<'a> {
 
                 116 => {
                     match self.current_char() {
-                        Some('=') => {
+                        '=' => {
                             self.advance();
                             state = 1161;
                             continue;
                         }
-                        Some('|') => {
+                        '|' => {
                             self.advance();
                             state = 1162;
                             continue;
@@ -1016,7 +1015,7 @@ impl<'a> Scanner for Rust<'a> {
                     println!("1: {}", lexema.clone ());
 
                     match self.current_char() {
-                        Some('\'') => {
+                        '\'' => {
                             self.advance();
                             state = 1599;
                             continue;
@@ -1033,31 +1032,31 @@ impl<'a> Scanner for Rust<'a> {
 
                 160 => {
                     match self.current_char() {
-                        Some('r') => {  // br
+                        'r' => {  // br
                             lexema.push('r');
                             auxiliary.push('r');
                             self.advance();
                             state = 161;
                             continue;
                         }
-                        Some('"') => {  // bu
+                        '"' => {  // bu
                             self.advance();
                             state = 1620;
                             continue;
                         }
-                        Some(c) if c.is_alphanumeric() => {
+                        c if c.is_alphanumeric() => {
                             lexema.push(c);
                             self.advance();
                             state = 10;
                             continue;
                         }
-                        Some('_') => {
+                        '_' => {
                             lexema.push('_');
                             self.advance();
                             state = 13;
                             continue;
                         }
-                        Some('!') => {
+                        '!' => {
                             lexema.push('!');
                             self.advance();
                             state = 12;
@@ -1072,30 +1071,30 @@ impl<'a> Scanner for Rust<'a> {
                 }
                 161 => {
                     match self.current_char() {
-                        Some('\"') => {
+                        '"' => {
                             self.advance();
                             state = 1620;
                             continue;
                         }
-                        Some(c) if c.is_alphanumeric() => {
+                        c if c.is_alphanumeric() => {
                             lexema.push(c);
                             self.advance();
                             state = 10;
                             continue;
                         }
-                        Some('_') => {
+                        '_' => {
                             lexema.push('_');
                             self.advance();
                             state = 13;
                             continue;
                         }
-                        Some('!') => {
+                        '!' => {
                             lexema.push('!');
                             self.advance();
                             state = 12;
                             continue;
                         }
-                        Some('#') => {  // bu
+                        '#' => {  // bu
                             counter += 1;
                             self.advance();
                             state = 1602;
@@ -1110,12 +1109,12 @@ impl<'a> Scanner for Rust<'a> {
                 }
                 1601 => {
                     match self.current_char() {
-                        Some('\"') => {
+                        '"' => {
                             self.advance();
                             state = 1620;
                             continue;
                         }
-                        Some('#') => {  // bu
+                        '#' => {  // bu
                             counter += 1;
                             self.advance();
                             state = 1602;
@@ -1128,12 +1127,12 @@ impl<'a> Scanner for Rust<'a> {
                 }
                 1602 => {
                     match self.current_char() {
-                        Some('\"') => {  // bu
+                        '"' => {  // bu
                             self.advance();
                             state = 1620;
                             continue;
                         }
-                        Some('#') => {  // bu
+                        '#' => {  // bu
                             counter += 1;
                             self.advance();
                             state = 1602;
@@ -1172,25 +1171,25 @@ STATE=1624 cur='\0'                     -> current_char() já está retornando o
                 1622 => {
                     self.retract();
                     match self.current_char() {
-                        Some('\"') => {
+                        '\"' => {
                             self.advance();
                             state = 1680;
                             continue;
                         }
                         //Some('\\') if string_type == StringLiteralType::Standard || string_type == StringLiteralType::ByteString => {
-                        Some('\\') if matches!(string_type, StringLiteralType::Standard | StringLiteralType::ByteString) => {
+                        '\\' if matches!(string_type, StringLiteralType::Standard | StringLiteralType::ByteString) => {
                             lexema.push('\\');
                             self.advance();
                             state = 1623;
                             continue;
                         }
-                        Some('\\') => {
+                        '\\' => {
                             lexema.push('\\');
                             self.advance();
                             state = 1625;
                             continue;
                         }
-                        Some(c) => {
+                        c => {
                             lexema.push(c);
                             self.advance();
                             state = 1624;
@@ -1203,7 +1202,7 @@ STATE=1624 cur='\0'                     -> current_char() já está retornando o
                 }
                 1623 => {
                     match self.current_char() {
-                        Some(c) => {
+                        c => {
                             lexema.push(c);
                             self.advance();
                             state = 1624;
@@ -1217,12 +1216,12 @@ STATE=1624 cur='\0'                     -> current_char() já está retornando o
 
                 1624 => {
                     match self.current_char() {
-                        Some('\"') => {
+                        '"' => {
                             self.advance();
                             state = 1680;
                             continue;
                         }
-                        Some('\\') if matches!(string_type, StringLiteralType::Standard | StringLiteralType::ByteString) => {
+                        '\\' if matches!(string_type, StringLiteralType::Standard | StringLiteralType::ByteString) => {
                             lexema.push('\\');
                             self.advance();
                             state = 1623;
@@ -1237,13 +1236,13 @@ STATE=1624 cur='\0'                     -> current_char() já está retornando o
                             continue;
                         }
                         */
-                        Some('\\') => {
+                        '\\' => {
                             lexema.push('\\');
                             self.advance();
                             state = 1625;
                             continue;
                         }
-                        Some(c) => {
+                        c => {
                             lexema.push(c);
                             self.advance();
                             state = 1624;
@@ -1256,32 +1255,32 @@ STATE=1624 cur='\0'                     -> current_char() já está retornando o
                 }
                 1625 => {
                     match self.current_char() {
-                        Some('u') => {  // \u{...}
+                        'u' => {  // \u{...}
                             lexema.pop(); // remove o '\' empilhado pelo chamador; \u{...} vira 1 char, não texto
                             self.advance();
                             state = 1630;
                             continue;
                         }
                         /*
-                        Some('u') => {  // \u{...}
+                        'u' => {  // \u{...}
                             self.advance();
                             state = 1630;
                             continue;
                         }
                         */
-                        Some('n') => { 
+                        'n' => { 
                             lexema.push(if string_type == StringLiteralType::ByteString { 'n' } else { '\n' }); 
                             self.advance(); 
                             state = 1650; 
                             continue; 
                         }
-                        Some('r') => { 
+                        'r' => { 
                             lexema.push(if string_type == StringLiteralType::ByteString { 'r' } else { '\r' }); 
                             self.advance(); 
                             state = 1650; 
                             continue; 
                         }
-                        Some('t') => { 
+                        't' => { 
                             lexema.push(if string_type == StringLiteralType::ByteString { 't' } else { '\t' }); 
                             self.advance(); 
                             state = 1650; 
@@ -1307,25 +1306,25 @@ STATE=1624 cur='\0'                     -> current_char() já está retornando o
                             continue;
                         }
                         */
-                        Some('\\') => {  // \\
+                        '\\' => {  // \\
                             lexema.push('\\');
                             self.advance();
                             state = 1650;
                             continue;
                         }
-                        Some('\'') => {  // \'
+                        '\'' => {  // \'
                             lexema.push('\'');
                             self.advance();
                             state = 1650;
                             continue;
                         }
-                        Some('\"') => {  // \"
+                        '"' => {  // \"
                             lexema.push('"');
                             self.advance();
                             state = 1650;
                             continue;
                         }
-                        Some(c) => {
+                        c => {
                             lexema.push(c);
                             self.advance();
                             state = 1624;
@@ -1340,13 +1339,13 @@ STATE=1624 cur='\0'                     -> current_char() já está retornando o
                 1630 => {
                     match self.current_char() {
                         /*
-                        Some('{') => {
+                        '{' => {
                             self.advance();
                             state = 1631;
                             continue;
                         }
                         */
-                        Some('{') => { 
+                        '{' => { 
                             auxiliary.clear(); 
                             self.advance(); 
                             state = 1631; 
@@ -1359,7 +1358,7 @@ STATE=1624 cur='\0'                     -> current_char() já está retornando o
                 }
                 1631 => {
                     match self.current_char() {
-                        Some(c) if c.is_digit(16) => {  // primeiro
+                        c if c.is_digit(16) => {  // primeiro
                             /*lexema.push(c);*/
                             auxiliary.push(c);
                             self.advance();
@@ -1373,14 +1372,14 @@ STATE=1624 cur='\0'                     -> current_char() já está retornando o
                 }
                 1632 => {
                     match self.current_char() {
-                        Some(c) if c.is_digit(16) => {  // segundo
+                        c if c.is_digit(16) => {  // segundo
                             /*lexema.push(c);*/
                             auxiliary.push(c);
                             self.advance();
                             state = 1633;
                             continue;
                         }
-                        Some('}') => {
+                        '}' => {
                             self.advance();
                             state = 1638;
                             continue;
@@ -1392,14 +1391,14 @@ STATE=1624 cur='\0'                     -> current_char() já está retornando o
                 }
                 1633 => {
                     match self.current_char() {
-                        Some(c) if c.is_digit(16) => {  // terceiro
+                        c if c.is_digit(16) => {  // terceiro
                             /*lexema.push(c);*/
                             auxiliary.push(c);
                             self.advance();
                             state = 1634;
                             continue;
                         }
-                        Some('}') => {
+                        '}' => {
                             self.advance();
                             state = 1638;
                             continue;
@@ -1411,14 +1410,14 @@ STATE=1624 cur='\0'                     -> current_char() já está retornando o
                 }
                 1634 => {
                     match self.current_char() {
-                        Some(c) if c.is_digit(16) => {  // quarto
+                        c if c.is_digit(16) => {  // quarto
                             /*lexema.push(c);*/
                             auxiliary.push(c);
                             self.advance();
                             state = 1635;
                             continue;
                         }
-                        Some('}') => {
+                        '}' => {
                             self.advance();
                             state = 1638;
                             continue;
@@ -1430,14 +1429,14 @@ STATE=1624 cur='\0'                     -> current_char() já está retornando o
                 }
                 1635 => {
                     match self.current_char() {
-                        Some(c) if c.is_digit(16) => {  // quinto
+                        c if c.is_digit(16) => {  // quinto
                             /*lexema.push(c);*/
                             auxiliary.push(c);
                             self.advance();
                             state = 1636;
                             continue;
                         }
-                        Some('}') => {
+                        '}' => {
                             self.advance();
                             state = 1638;
                             continue;
@@ -1449,14 +1448,14 @@ STATE=1624 cur='\0'                     -> current_char() já está retornando o
                 }
                 1636 => {
                     match self.current_char() {
-                        Some(c) if c.is_digit(16) => {  // sexto
+                        c if c.is_digit(16) => {  // sexto
                             /*lexema.push(c);*/
                             auxiliary.push(c);
                             self.advance();
                             state = 1637;
                             continue;
                         }
-                        Some('}') => {
+                        '}' => {
                             self.advance();
                             state = 1638;
                             continue;
@@ -1468,7 +1467,7 @@ STATE=1624 cur='\0'                     -> current_char() já está retornando o
                 }
                 1637 => {
                     match self.current_char() {
-                        Some('}') => {
+                        '}' => {
                             self.advance();
                             state = 1638;
                             continue;
@@ -1510,7 +1509,7 @@ STATE=1624 cur='\0'                     -> current_char() já está retornando o
 
                 1680 => {
                     match self.current_char() {
-                        Some('#') => {
+                        '#' => {
                             counter -= 1;
                             self.advance();
                             state = 1680;
@@ -1574,14 +1573,14 @@ impl Rust<'_> {
             match state {
                 0 => {
                     match self.current_char() {
-                        Some('\\') => {
+                        '\\' => {
                             println!("Veio o caractere: '{}'", '\\');
                             auxiliary.push('\\');
                             self.advance();
                             state = 1;
                             continue;
                         }
-                        Some(c) => {
+                        c => {
                             println!("Veio o caractere: '{}'", c);
                             auxiliary.push(c);
                             lexema.push(c);
@@ -1597,49 +1596,49 @@ impl Rust<'_> {
                 }
                 1 => {
                     match self.current_char() {
-                        Some('u') => {  // \u{...}
+                        'u' => {  // \u{...}
                             println!("Veio o caractere: '{}'", 'u');
                             auxiliary.push('u');
                             self.advance();
                             state = 2;
                             continue;
                         }
-                        Some('n') => {  // \n
+                        'n' => {  // \n
                             auxiliary.push('n');
                             lexema.push('\n');
                             self.advance();
                             state = 12;
                             continue;
                         }
-                        Some('r') => {  // \r
+                        'r' => {  // \r
                             auxiliary.push('r');
                             lexema.push('\r');
                             self.advance();
                             state = 12;
                             continue;
                         }
-                        Some('t') => {  // \t
+                        't' => {  // \t
                             auxiliary.push('t');
                             lexema.push('\t');
                             self.advance();
                             state = 12;
                             continue;
                         }
-                        Some('\\') => {  // \\
+                        '\\' => {  // \\
                             auxiliary.push('\\');
                             lexema.push('\\');
                             self.advance();
                             state = 12;
                             continue;
                         }
-                        Some('\'') => {  // \'
+                        '\'' => {  // \'
                             auxiliary.push('\'');
                             lexema.push('\'');
                             self.advance();
                             state = 12;
                             continue;
                         }
-                        Some('\"') => {  // \"
+                        '\"' => {  // \"
                             auxiliary.push('\"');
                             lexema.push('\"');
                             self.advance();
@@ -1654,7 +1653,7 @@ impl Rust<'_> {
                 }
                 2 => {
                     match self.current_char() {
-                        Some('{') => {
+                        '{' => {
                             println!("Veio o caractere: '{}'", '{');
                             auxiliary.push('{');
                             self.advance();
@@ -1670,7 +1669,7 @@ impl Rust<'_> {
                 }
                 3 => {
                     match self.current_char() {
-                        Some(c) if c.is_digit(16) => {  // primeiro
+                        c if c.is_digit(16) => {  // primeiro
                             println!("Veio o caractere: '{}'", c);
                             auxiliary.push(c);
                             lexema.push(c);
@@ -1686,7 +1685,7 @@ impl Rust<'_> {
                 }
                 4 => {
                     match self.current_char() {
-                        Some(c) if c.is_digit(16) => {  // segundo
+                        c if c.is_digit(16) => {  // segundo
                             println!("Veio o caractere: '{}'", c);
                             auxiliary.push(c);
                             lexema.push(c);
@@ -1694,7 +1693,7 @@ impl Rust<'_> {
                             state = 5;
                             continue;
                         }
-                        Some('}') => {
+                        '}' => {
                             println!("Veio o caractere: '{}'", '}');
                             auxiliary.push('}');
                             self.advance();
@@ -1709,7 +1708,7 @@ impl Rust<'_> {
                 }
                 5 => {
                     match self.current_char() {
-                        Some(c) if c.is_digit(16) => {  // terceiro
+                        c if c.is_digit(16) => {  // terceiro
                             println!("Veio o caractere: '{}'", c);
                             auxiliary.push(c);
                             lexema.push(c);
@@ -1717,7 +1716,7 @@ impl Rust<'_> {
                             state = 6;
                             continue;
                         }
-                        Some('}') => {
+                        '}' => {
                             println!("Veio o caractere: '{}'", '}');
                             auxiliary.push('}');
                             self.advance();
@@ -1732,7 +1731,7 @@ impl Rust<'_> {
                 }
                 6 => {
                     match self.current_char() {
-                        Some(c) if c.is_digit(16) => {  // quarto
+                        c if c.is_digit(16) => {  // quarto
                             println!("Veio o caractere: '{}'", c);
                             auxiliary.push(c);
                             lexema.push(c);
@@ -1740,7 +1739,7 @@ impl Rust<'_> {
                             state = 7;
                             continue;
                         }
-                        Some('}') => {
+                        '}' => {
                             println!("Veio o caractere: '{}'", '}');
                             auxiliary.push('}');
                             self.advance();
@@ -1755,7 +1754,7 @@ impl Rust<'_> {
                 }
                 7 => {
                     match self.current_char() {
-                        Some(c) if c.is_digit(16) => {  // quinto
+                        c if c.is_digit(16) => {  // quinto
                             println!("Veio o caractere: '{}'", c);
                             auxiliary.push(c);
                             lexema.push(c);
@@ -1763,7 +1762,7 @@ impl Rust<'_> {
                             state = 8;
                             continue;
                         }
-                        Some('}') => {
+                        '}' => {
                             println!("Veio o caractere: '{}'", '}');
                             auxiliary.push('}');
                             self.advance();
@@ -1778,7 +1777,7 @@ impl Rust<'_> {
                 }
                 8 => {
                     match self.current_char() {
-                        Some(c) if c.is_digit(16) => {  // sexto
+                        c if c.is_digit(16) => {  // sexto
                             println!("Veio o caractere: '{}'", c);
                             auxiliary.push(c);
                             lexema.push(c);
@@ -1786,7 +1785,7 @@ impl Rust<'_> {
                             state = 9;
                             continue;
                         }
-                        Some('}') => {
+                        '}' => {
                             println!("Veio o caractere: '{}'", '}');
                             auxiliary.push('}');
                             self.advance();
@@ -1801,7 +1800,7 @@ impl Rust<'_> {
                 }
                 9 => {
                     match self.current_char() {
-                        Some('}') => {
+                        '}' => {
                             println!("Veio o caractere: '{}'", '}');
                             auxiliary.push('}');
                             self.advance();
@@ -1840,13 +1839,13 @@ impl Rust<'_> {
             match state {
                 0 => {  
                     match self.current_char() {
-                        Some('0') => {
+                        '0' => {
                             lexema.push('0');
                             self.advance();
                             state = 1;
                             continue;
                         }
-                        Some(c) if c.is_digit(10) => {
+                        c if c.is_digit(10) => {
                             lexema.push(c);
                             self.advance();
                             state = 25;
@@ -1866,60 +1865,60 @@ impl Rust<'_> {
                 }
                 1 => {
                     match self.current_char() {
-                        Some('.') => {
+                        '.' => {
                             lexema.push('.');
                             self.advance();
                             state = 7;
                             continue;
                         }
-                        Some('e') | Some('E') => {
+                        'e' | 'E' => {
                             lexema.push('e');
                             self.advance();
                             state = 32;
                             continue;
                         }
-                        Some('i') => {
+                        'i' => {
                             signed = true;
                             self.advance();
                             state = 9;
                             continue;
                         }
-                        Some('u') => {
+                        'u' => {
                             signed = false;
                             self.advance();
                             state = 9;
                             continue;
                         }
-                        Some('f') => {
+                        'f' => {
                             self.advance();
                             state = 36;
                             continue;
                         }
-                        Some('b') | Some('B') => {
+                        'b' | 'B' => {
                             lexema.clear();
                             self.advance();
                             state = 3;
                             continue;
                         }
-                        Some('o') | Some('O') => {
+                        'o' | 'O' => {
                             lexema.clear();
                             self.advance();
                             state = 4;
                             continue;
                         }
-                        Some('x') | Some('X') => {
+                        'x' | 'X' => {
                             lexema.clear();
                             self.advance();
                             state = 5;
                             continue;
                         }
-                        Some(c) if c.is_digit(10) => {
+                        c if c.is_digit(10) => {
                             lexema.push(c);
                             self.advance();
                             state = 25;
                             continue;
                         }
-                        Some('_') => {
+                        '_' => {
                             self.advance();
                             state = 25;
                             continue;
@@ -1936,13 +1935,13 @@ impl Rust<'_> {
                 }
                 3 => {
                     match self.current_char() {
-                        Some(c) if c.is_digit(2) => {
+                        c if c.is_digit(2) => {
                             lexema.push(c);
                             self.advance();
                             state = 8;
                             continue;
                         }
-                        Some('_') => {
+                        '_' => {
                             self.advance();
                             state = 8;
                             continue;
@@ -1954,13 +1953,13 @@ impl Rust<'_> {
                 }
                 4 => {
                     match self.current_char() {
-                        Some(c) if c.is_digit(8) => {
+                        c if c.is_digit(8) => {
                             lexema.push(c);
                             self.advance();
                             state = 23;
                             continue;
                         }
-                        Some('_') => {
+                        '_' => {
                             self.advance();
                             state = 23;
                             continue;
@@ -1972,13 +1971,13 @@ impl Rust<'_> {
                 }
                 5 => {
                     match self.current_char() {
-                        Some(c) if c.is_digit(16) => {
+                        c if c.is_digit(16) => {
                             lexema.push(c);
                             self.advance();
                             state = 24;
                             continue;
                         }
-                        Some('_') => {
+                        '_' => {
                             self.advance();
                             state = 24;
                             continue;
@@ -1993,19 +1992,19 @@ impl Rust<'_> {
                 }
                 7 => {
                     match self.current_char() {
-                        Some(c) if c.is_digit(10) => {
+                        c if c.is_digit(10) => {
                             lexema.push(c);
                             self.advance();
                             state = 35;
                             continue;
                         }
-                        Some('f') => {
+                        'f' => {
                             lexema.push('f');
                             self.advance();
                             state = 36;
                             continue;
                         }
-                        Some('_') => {
+                        '_' => {
                             self.advance();
                             state = 35;
                             continue;
@@ -2021,24 +2020,24 @@ impl Rust<'_> {
                 }
                 8 => {
                     match self.current_char() {
-                        Some('_') => {
+                        '_' => {
                             self.advance();
                             state = 8;
                             continue;
                         }
-                        Some(c) if c.is_digit(2) => {
+                        c if c.is_digit(2) => {
                             lexema.push(c);
                             self.advance();
                             state = 8;
                             continue;
                         }
-                        Some('i') => {
+                        'i' => {
                             signed = true;
                             self.advance();
                             state = 9;
                             continue;
                         }
-                        Some('u') => {
+                        'u' => {
                             signed = false;
                             self.advance();
                             state = 9;
@@ -2057,27 +2056,27 @@ impl Rust<'_> {
                 }
                 9 => {
                     match self.current_char() {
-                        Some('1') => {
+                        '1' => {
                             self.advance();
                             state = 11;
                             continue;
                         }
-                        Some('3') => {
+                        '3' => {
                             self.advance();
                             state = 15;
                             continue;
                         }
-                        Some('6') => {
+                        '6' => {
                             self.advance();
                             state = 17;
                             continue;
                         }
-                        Some('8') => {
+                        '8' => {
                             self.advance();
                             state = 10;
                             continue;
                         }
-                        Some('s') => {
+                        's' => {
                             self.advance();
                             state = 19;
                             continue;
@@ -2097,12 +2096,12 @@ impl Rust<'_> {
                 }
                 11 => {
                     match self.current_char() {
-                        Some('2') => {
+                        '2' => {
                             self.advance();
                             state = 13;
                             continue;
                         }
-                        Some('6') => {
+                        '6' => {
                             self.advance();
                             state = 12;
                             continue;
@@ -2122,7 +2121,7 @@ impl Rust<'_> {
                 }
                 13 => {
                     match self.current_char() {
-                        Some('8') => {
+                        '8' => {
                             self.advance();
                             state = 14;
                             continue;
@@ -2142,7 +2141,7 @@ impl Rust<'_> {
                 }
                 15 => {
                     match self.current_char() {
-                        Some('2') => {
+                        '2' => {
                             self.advance();
                             state = 16;
                             continue;
@@ -2162,7 +2161,7 @@ impl Rust<'_> {
                 }
                 17 => {
                     match self.current_char() {
-                        Some('4') => {
+                        '4' => {
                             self.advance();
                             state = 18;
                             continue;
@@ -2182,7 +2181,7 @@ impl Rust<'_> {
                 }
                 19 => {
                     match self.current_char() {
-                        Some('i') => {
+                        'i' => {
                             self.advance();
                             state = 20;
                             continue;
@@ -2194,7 +2193,7 @@ impl Rust<'_> {
                 }
                 20 => {
                     match self.current_char() {
-                        Some('z') => {
+                        'z' => {
                             self.advance();
                             state = 21;
                             continue;
@@ -2206,7 +2205,7 @@ impl Rust<'_> {
                 }
                 21 => {
                     match self.current_char() {
-                        Some('e') => {
+                        'e' => {
                             self.advance();
                             state = 22;
                             continue;
@@ -2226,24 +2225,24 @@ impl Rust<'_> {
                 }
                 23 => {
                     match self.current_char() {
-                        Some(c) if c.is_digit(8) => {
+                        c if c.is_digit(8) => {
                             lexema.push(c);
                             self.advance();
                             state = 23;
                             continue;
                         }
-                        Some('_') => {
+                        '_' => {
                             self.advance();
                             state = 23;
                             continue;
                         }
-                        Some('i') => {
+                        'i' => {
                             signed = true;
                             self.advance();
                             state = 9;
                             continue;
                         }
-                        Some('u') => {
+                        'u' => {
                             signed = false;
                             self.advance();
                             state = 9;
@@ -2258,24 +2257,24 @@ impl Rust<'_> {
                 }
                 24 => {
                     match self.current_char() {
-                        Some(c) if c.is_digit(16) => {
+                        c if c.is_digit(16) => {
                             lexema.push(c);
                             self.advance();
                             state = 24;
                             continue;
                         }
-                        Some('_') => {
+                        '_' => {
                             self.advance();
                             state = 24;
                             continue;
                         }
-                        Some('i') => {
+                        'i' => {
                             signed = true;
                             self.advance();
                             state = 9;
                             continue;
                         }
-                        Some('u') => {
+                        'u' => {
                             signed = false;
                             self.advance();
                             state = 9;
@@ -2290,36 +2289,36 @@ impl Rust<'_> {
                 }
                 25 => {
                     match self.current_char() {
-                        Some('.') => {
+                        '.' => {
                             lexema.push('.');
                             self.advance();
                             state = 35;
                             continue;
                         }
-                        Some(c) if c.is_digit(10) => {
+                        c if c.is_digit(10) => {
                             lexema.push(c);
                             self.advance();
                             state = 25;
                             continue;
                         }
-                        Some('_') => {
+                        '_' => {
                             self.advance();
                             state = 25;
                             continue;
                         }
-                        Some('e') | Some('E') => {
+                        'e' | 'E' => {
                             lexema.push('e');
                             self.advance();
                             state = 32;
                             continue;
                         }
-                        Some('i') => {
+                        'i' => {
                             signed = true;
                             self.advance();
                             state = 9;
                             continue;
                         }
-                        Some('u') => {
+                        'u' => {
                             signed = false;
                             self.advance();
                             state = 9;
@@ -2362,19 +2361,19 @@ impl Rust<'_> {
                 }
                 32 => {
                     match self.current_char() {
-                        Some(c) if c.is_digit(10) => {
+                        c if c.is_digit(10) => {
                             lexema.push(c);
                             self.advance();
                             state = 34;
                             continue;
                         }
-                        Some('+') => {
+                        '+' => {
                             lexema.push('+');
                             self.advance();
                             state = 33;
                             continue;
                         }
-                        Some('-') => {
+                        '-' => {
                             lexema.push('-');
                             self.advance();
                             state = 33;
@@ -2387,13 +2386,13 @@ impl Rust<'_> {
                 }
                 33 => {
                     match self.current_char() {
-                        Some(c) if c.is_digit(10) => {
+                        c if c.is_digit(10) => {
                             lexema.push(c);
                             self.advance();
                             state = 34;
                             continue;
                         }
-                        Some('_') => {
+                        '_' => {
                             self.advance();
                             state = 34;
                             continue;
@@ -2405,18 +2404,18 @@ impl Rust<'_> {
                 }
                 34 => {
                     match self.current_char() {
-                        Some(c) if c.is_digit(10)  => {
+                        c if c.is_digit(10)  => {
                             lexema.push(c);
                             self.advance();
                             state = 34;
                             continue;
                         }
-                        Some('_') => {
+                        '_' => {
                             self.advance();
                             state = 34;
                             continue;
                         }
-                        Some('f') => {
+                        'f' => {
                             lexema.push('f');
                             self.advance();
                             state = 36;
@@ -2431,24 +2430,24 @@ impl Rust<'_> {
                 }
                 35 => {
                     match self.current_char() {
-                        Some(c) if c.is_digit(10) => {
+                        c if c.is_digit(10) => {
                             lexema.push(c);
                             self.advance();
                             state = 35;
                             continue;
                         }
-                        Some('_') => {
+                        '_' => {
                             self.advance();
                             state = 35;
                             continue;
                         }
-                        Some('f') => {
+                        'f' => {
                             lexema.push('f');
                             self.advance();
                             state = 36;
                             continue;
                         }
-                        Some('e') | Some('E') => {
+                        'e' | 'E' => {
                             lexema.push('e');
                             self.advance();
                             state = 32;
@@ -2463,13 +2462,13 @@ impl Rust<'_> {
                 }
                 36 => {
                     match self.current_char() {
-                        Some('3') => {
+                        '3' => {
                             lexema.push('3');
                             self.advance();
                             state = 37;
                             continue;
                         }
-                        Some('6') => {
+                        '6' => {
                             lexema.push('6');
                             self.advance();
                             state = 39;
@@ -2482,7 +2481,7 @@ impl Rust<'_> {
                 }
                 37 => {
                     match self.current_char() {
-                        Some('2') => {
+                        '2' => {
                             lexema.push('2');
                             self.advance();
                             state = 38;
@@ -2499,7 +2498,7 @@ impl Rust<'_> {
                 }
                 39 => {
                     match self.current_char() {
-                        Some('4') => {
+                        '4' => {
                             lexema.push('4');
                             self.advance();
                             state = 40;
@@ -2520,7 +2519,973 @@ impl Rust<'_> {
                 }
                 42 => {
                     match self.current_char() {
-                        Some('f') => {
+                        'f' => {
+                            self.advance();
+                            state = 36;
+                            continue;
+                        }
+                        _ => {
+                            // self.advance();
+                            state = 40;
+                            continue;
+                        }
+                    }
+                }
+
+                _ => {
+                    return Token::Error(Tag::ERR, current_row, current_col, format!("Número mal formado: {}", lexema));
+                }
+            }
+        }
+    }
+
+
+    fn row_string(&mut self, n_sharp: usize) -> Token {
+        let mut state = 0;
+        let mut lexema = String::new();
+
+        loop {
+            match state {
+                0 => {
+                    match self.current_char() {
+                        c  if c != '\"' => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 0;
+                            continue;
+                        }
+                        '\\' => {
+                            self.advance();
+                            state = 1;
+                            continue;
+                        }
+                        '\"' => {
+                            self.advance();
+                            state = 4;
+                            continue;
+                        }
+                        _ => {
+                            todo!();
+                        }
+                    }
+                }
+                1 => {
+                    match self.current_char() {
+                        'n' => {
+                            lexema.push('\n');
+                            self.advance();
+                            state = 0;
+                            continue;
+                        }
+                        't' => {
+                            lexema.push('\t');
+                            self.advance();
+                            state = 0;
+                            continue;
+                        }
+                        'r' => {
+                            lexema.push('\r');
+                            self.advance();
+                            state = 0;
+                            continue;
+                        }
+                        '\\' => {
+                            lexema.push('\\');
+                            self.advance();
+                            state = 0;
+                            continue;
+                        }
+                        '\"' => {
+                            lexema.push('\"');
+                            self.advance();
+                            state = 0;
+                            continue;
+                        }
+                        '\'' => {
+                            lexema.push('\'');
+                            self.advance();
+                            state = 0;
+                            continue;
+                        }
+                        'u' => {
+                            self.advance();
+                            state = 2;
+                            continue;
+                        }
+                        _ => {
+                            todo!();
+                        }
+                    }
+
+                    PAREI AQUI
+
+                }
+                _ => {
+                    todo!();
+                }
+            }
+        }
+    }
+
+    fn row_string_counter(&mut self, n_sharp: usize) -> Token {
+        let mut state = 0;
+        let mut lexema = String::new();
+        let mut k_sharp: usize = 0;
+
+        loop {
+            match state {
+                0 => {
+                    match self.current_char() {
+                        c  if c != '\"' => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 0;
+                            continue;
+                        }
+                        '\"' => {
+                            self.advance();
+                            state = 1;
+                            k_sharp = n_sharp;
+                            continue;
+                        }
+                        _ => {
+                            todo!();
+                        }
+                    }
+                }
+                1 => {
+                    match self.current_char() {
+                        '#' => {
+                            self.advance();
+                            k_sharp -= 1;
+                            if k_sharp == 0 {
+                                state = 2;
+                            }
+                            else{
+                                state = 1;
+                            }
+                            continue;
+                        }
+                        _ => {
+                            lexema.extend(std::iter::repeat('#').take(n_sharp - k_sharp));
+                            self.advance();
+                            state = 0;
+                            continue;
+                        }
+                    }
+                }
+                2 => {
+                    return Token::String(Tag::STRING, current_row, current_col, lexema);
+                }
+            }
+        }
+        
+    }
+
+    fn peek_string_prefix(&mut self) -> Token {
+        let mut state = 0;
+        let mut n_char = 0;
+        let mut n_sharp= 0;
+        let mut lexema = String::new();
+
+        loop {
+            match state {
+                0 => {
+                    match self.current_char() {
+                        'r' => {
+                            lexema.push('r');
+                            self.advance();
+                            n_char += 1;
+                            state = 2;
+                            continue;
+                        }
+                        'b' => {
+                            lexema.push('b');
+                            self.advance();
+                            n_char += 1;
+                            state = 1;
+                            continue;
+                        }
+                        '\"' => {
+                            lexema.push('b');
+                            self.advance();
+                            n_char += 1;
+                            state = 4;
+                            continue;
+                        }
+                        _ => {
+                            todo!();
+                        }
+                    }
+                }
+                1 => {
+                    match self.current_char() {
+                        'r' => {
+                            lexema.push('r');
+                            self.advance();
+                            n_char += 1;
+                            state = 2;
+                            continue;
+                        }
+                        '\"' => {
+                            lexema.push('b');
+                            self.advance();
+                            n_char += 1;
+                            state = 4;
+                            continue;
+                        }
+                        _ => {
+                            todo!();
+                        }
+                    }
+                }
+                2 => {
+                    match self.current_char() {
+                        '\"' => {
+                            lexema.push('b');
+                            self.advance();
+                            n_char += 1;
+                            state = 5;
+                            continue;
+                        }
+                        '#' => {
+                            lexema.push('b');
+                            self.advance();
+                            n_char += 1;
+                            n_sharp += 1;
+                            state = 3;
+                            continue;
+                        }
+                        _ => {
+                            todo!();
+                        }
+                    }
+                }
+                3 => {
+                    match self.current_char() {
+                        '\"' => {
+                            lexema.push('b');
+                            self.advance();
+                            n_char += 1;
+                            state = 5;
+                            continue;
+                        }
+                        '#' => {
+                            lexema.push('b');
+                            self.advance();
+                            n_char += 1;
+                            n_sharp += 1;
+                            state = 3;
+                            continue;
+                        }
+                        _ => {
+                            todo!();
+                        }
+                    }
+                }
+                5 => {
+
+                }
+                _ => {
+                    todo!();
+                }
+            }
+        }
+
+    }
+
+    pub fn peek_string(&mut self) -> Token {
+        let mut state = 0;
+        let mut lexema = String::new();
+        let mut signed = true;
+        let current_row = self.row();
+        let current_col = self.col();
+
+        loop {
+            match state {
+                0 => {  
+                    match self.current_char() {
+                        '0' => {
+                            lexema.push('0');
+                            self.advance();
+                            state = 1;
+                            continue;
+                        }
+                        c if c.is_digit(10) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 25;
+                            continue;
+                        }
+                        // Conferir se pode começar com um ponto
+                        // Some('.') => {
+                        //     lexema.push('0');
+                        //     self.advance();
+                        //     state = 7;
+                        //     continue;
+                        // }
+                        _ => {
+                            unreachable!();
+                        }
+                    }
+                }
+                1 => {
+                    match self.current_char() {
+                        '.' => {
+                            lexema.push('.');
+                            self.advance();
+                            state = 7;
+                            continue;
+                        }
+                        'e' | 'E' => {
+                            lexema.push('e');
+                            self.advance();
+                            state = 32;
+                            continue;
+                        }
+                        'i' => {
+                            signed = true;
+                            self.advance();
+                            state = 9;
+                            continue;
+                        }
+                        'u' => {
+                            signed = false;
+                            self.advance();
+                            state = 9;
+                            continue;
+                        }
+                        'f' => {
+                            self.advance();
+                            state = 36;
+                            continue;
+                        }
+                        'b' | 'B' => {
+                            lexema.clear();
+                            self.advance();
+                            state = 3;
+                            continue;
+                        }
+                        'o' | 'O' => {
+                            lexema.clear();
+                            self.advance();
+                            state = 4;
+                            continue;
+                        }
+                        'x' | 'X' => {
+                            lexema.clear();
+                            self.advance();
+                            state = 5;
+                            continue;
+                        }
+                        c if c.is_digit(10) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 25;
+                            continue;
+                        }
+                        '_' => {
+                            self.advance();
+                            state = 25;
+                            continue;
+                        }
+                        _ => {
+                            // self.advance();
+                            state = 26;
+                            continue;
+                        }
+                    }
+                }
+                2 => {
+                    unreachable!();
+                }
+                3 => {
+                    match self.current_char() {
+                        c if c.is_digit(2) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 8;
+                            continue;
+                        }
+                        '_' => {
+                            self.advance();
+                            state = 8;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
+                }
+                4 => {
+                    match self.current_char() {
+                        c if c.is_digit(8) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 23;
+                            continue;
+                        }
+                        '_' => {
+                            self.advance();
+                            state = 23;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
+                }
+                5 => {
+                    match self.current_char() {
+                        c if c.is_digit(16) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 24;
+                            continue;
+                        }
+                        '_' => {
+                            self.advance();
+                            state = 24;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
+                }
+                6 => {
+                    unreachable!();
+                }
+                7 => {
+                    match self.current_char() {
+                        c if c.is_digit(10) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 35;
+                            continue;
+                        }
+                        'f' => {
+                            lexema.push('f');
+                            self.advance();
+                            state = 36;
+                            continue;
+                        }
+                        '_' => {
+                            self.advance();
+                            state = 35;
+                            continue;
+                        }
+                        _ => {
+                            lexema.push('f');
+                            lexema.push('6');
+                            lexema.push('4');
+                            state = 40;
+                            continue;
+                        }
+                    }
+                }
+                8 => {
+                    match self.current_char() {
+                        '_' => {
+                            self.advance();
+                            state = 8;
+                            continue;
+                        }
+                        c if c.is_digit(2) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 8;
+                            continue;
+                        }
+                        'i' => {
+                            signed = true;
+                            self.advance();
+                            state = 9;
+                            continue;
+                        }
+                        'u' => {
+                            signed = false;
+                            self.advance();
+                            state = 9;
+                            continue;
+                        }
+                        // Some('\0') => {
+                        //     state = 27;
+                        //     continue;
+                        // }
+                        _ => {
+                            state = 27;
+                            // self.advance();
+                            continue;
+                        }
+                    }
+                }
+                9 => {
+                    match self.current_char() {
+                        '1' => {
+                            self.advance();
+                            state = 11;
+                            continue;
+                        }
+                        '3' => {
+                            self.advance();
+                            state = 15;
+                            continue;
+                        }
+                        '6' => {
+                            self.advance();
+                            state = 17;
+                            continue;
+                        }
+                        '8' => {
+                            self.advance();
+                            state = 10;
+                            continue;
+                        }
+                        's' => {
+                            self.advance();
+                            state = 19;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
+                }
+                10 => {
+                    // u8, i8
+                    if signed {
+                        return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::I8);
+                    } else {
+                        return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::U8);
+                    }
+                }
+                11 => {
+                    match self.current_char() {
+                        '2' => {
+                            self.advance();
+                            state = 13;
+                            continue;
+                        }
+                        '6' => {
+                            self.advance();
+                            state = 12;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
+                }
+                12 => {
+                    // u16, i16
+                    if signed {
+                        return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::I16);
+                    } else {
+                        return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::U16);
+                    }
+                }
+                13 => {
+                    match self.current_char() {
+                        '8' => {
+                            self.advance();
+                            state = 14;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
+                }
+                14 => {
+                    // u128, i128
+                    if signed {
+                        return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::I128);
+                    } else {
+                        return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::U128);
+                    }
+                }
+                15 => {
+                    match self.current_char() {
+                        '2' => {
+                            self.advance();
+                            state = 16;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
+                }
+                16 => {
+                    // u32, i32
+                    if signed {
+                        return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::I32);
+                    } else {
+                        return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::U32);
+                    }
+                }
+                17 => {
+                    match self.current_char() {
+                        '4' => {
+                            self.advance();
+                            state = 18;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
+                }
+                18 => {
+                    // u64, i64
+                    if signed {
+                        return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::I64);
+                    } else {
+                        return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::U64);
+                    }
+                }
+                19 => {
+                    match self.current_char() {
+                        'i' => {
+                            self.advance();
+                            state = 20;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
+                }
+                20 => {
+                    match self.current_char() {
+                        'z' => {
+                            self.advance();
+                            state = 21;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
+                }
+                21 => {
+                    match self.current_char() {
+                        'e' => {
+                            self.advance();
+                            state = 22;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
+                }
+                22 => {
+                    // usize, isize
+                    if signed {
+                        return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::ISIZE);
+                    } else {
+                        return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::USIZE);
+                    }
+                }
+                23 => {
+                    match self.current_char() {
+                        c if c.is_digit(8) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 23;
+                            continue;
+                        }
+                        '_' => {
+                            self.advance();
+                            state = 23;
+                            continue;
+                        }
+                        'i' => {
+                            signed = true;
+                            self.advance();
+                            state = 9;
+                            continue;
+                        }
+                        'u' => {
+                            signed = false;
+                            self.advance();
+                            state = 9;
+                            continue;
+                        }
+                        _ => {
+                            // self.advance();
+                            state = 28;
+                            continue;
+                        }
+                    }
+                }
+                24 => {
+                    match self.current_char() {
+                        c if c.is_digit(16) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 24;
+                            continue;
+                        }
+                        '_' => {
+                            self.advance();
+                            state = 24;
+                            continue;
+                        }
+                        'i' => {
+                            signed = true;
+                            self.advance();
+                            state = 9;
+                            continue;
+                        }
+                        'u' => {
+                            signed = false;
+                            self.advance();
+                            state = 9;
+                            continue;
+                        }
+                        _ => {
+                            // self.advance();
+                            state = 29;
+                            continue;
+                        }
+                    }
+                }
+                25 => {
+                    match self.current_char() {
+                        '.' => {
+                            lexema.push('.');
+                            self.advance();
+                            state = 35;
+                            continue;
+                        }
+                        c if c.is_digit(10) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 25;
+                            continue;
+                        }
+                        '_' => {
+                            self.advance();
+                            state = 25;
+                            continue;
+                        }
+                        'e' | 'E' => {
+                            lexema.push('e');
+                            self.advance();
+                            state = 32;
+                            continue;
+                        }
+                        'i' => {
+                            signed = true;
+                            self.advance();
+                            state = 9;
+                            continue;
+                        }
+                        'u' => {
+                            signed = false;
+                            self.advance();
+                            state = 9;
+                            continue;
+                        }
+                        _ => {
+                            // self.advance();
+                            state = 30;
+                            continue;
+                        }
+                    }
+                }
+                26 => {
+                    self.retract();
+                    return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::ISIZE);
+                }
+                27 => {
+                    self.retract();
+                    //todo!("Converter binário para inteiro");
+                    return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::ISIZE);
+                }
+                28 => {
+                    self.retract();
+                    //todo!("Converter octal para inteiro");
+                    return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::ISIZE);
+                }
+                29 => {
+                    self.retract();
+                    //todo!("Converter hexa para inteiro");
+                    return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::ISIZE);
+                }
+                30 => {
+                    self.retract();
+                    //todo!("Converter decimal para inteiro");
+                    return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::ISIZE);
+                }
+                31 => {
+                    self.retract();
+                    return Token::Integer(Tag::INTEGER, current_row, current_col, lexema, IntegerLiteralType::ISIZE);
+                }
+                32 => {
+                    match self.current_char() {
+                        c if c.is_digit(10) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 34;
+                            continue;
+                        }
+                        '+' => {
+                            lexema.push('+');
+                            self.advance();
+                            state = 33;
+                            continue;
+                        }
+                        '-' => {
+                            lexema.push('-');
+                            self.advance();
+                            state = 33;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
+                }
+                33 => {
+                    match self.current_char() {
+                        c if c.is_digit(10) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 34;
+                            continue;
+                        }
+                        '_' => {
+                            self.advance();
+                            state = 34;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
+                }
+                34 => {
+                    match self.current_char() {
+                        c if c.is_digit(10)  => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 34;
+                            continue;
+                        }
+                        '_' => {
+                            self.advance();
+                            state = 34;
+                            continue;
+                        }
+                        'f' => {
+                            lexema.push('f');
+                            self.advance();
+                            state = 36;
+                            continue;
+                        }
+                        _ => {
+                            // self.advance();
+                            state = 41;
+                            continue;
+                        }
+                    }
+                }
+                35 => {
+                    match self.current_char() {
+                        c if c.is_digit(10) => {
+                            lexema.push(c);
+                            self.advance();
+                            state = 35;
+                            continue;
+                        }
+                        '_' => {
+                            self.advance();
+                            state = 35;
+                            continue;
+                        }
+                        'f' => {
+                            lexema.push('f');
+                            self.advance();
+                            state = 36;
+                            continue;
+                        }
+                        'e' | 'E' => {
+                            lexema.push('e');
+                            self.advance();
+                            state = 32;
+                            continue;
+                        }
+                        _ => {
+                            // self.advance();
+                            state = 41;
+                            continue;
+                        }
+                    }
+                }
+                36 => {
+                    match self.current_char() {
+                        '3' => {
+                            lexema.push('3');
+                            self.advance();
+                            state = 37;
+                            continue;
+                        }
+                        '6' => {
+                            lexema.push('6');
+                            self.advance();
+                            state = 39;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
+                }
+                37 => {
+                    match self.current_char() {
+                        '2' => {
+                            lexema.push('2');
+                            self.advance();
+                            state = 38;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
+                }
+                38 => {
+                    // f32
+                    return Token::Float(Tag::FLOAT, current_row, current_col, lexema, FloatLiteralType::F32);
+                }
+                39 => {
+                    match self.current_char() {
+                        '4' => {
+                            lexema.push('4');
+                            self.advance();
+                            state = 40;
+                            continue;
+                        }
+                        _ => {
+                            todo!("Terra");
+                        }
+                    }
+                }
+                40 => {
+                    // f64
+                    return Token::Float(Tag::FLOAT, current_row, current_col, lexema, FloatLiteralType::F64);
+                }
+                41 => {
+                    self.retract();
+                    return Token::Float(Tag::FLOAT, current_row, current_col, lexema, FloatLiteralType::F64);
+                }
+                42 => {
+                    match self.current_char() {
+                        'f' => {
                             self.advance();
                             state = 36;
                             continue;
