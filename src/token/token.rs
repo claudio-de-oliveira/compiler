@@ -2612,13 +2612,56 @@ impl Rust<'_> {
                             state = 2;
                             continue;
                         }
+                        'x' => {
+                            self.advance();
+                            state = 10;
+                            continue;
+                        }
                         _ => {
                             todo!();
                         }
                     }
-
-                    PAREI AQUI
-
+                }
+                2 => {
+                    match self.current_char() {
+                        '{' => {
+                            self.advance();
+                            state = 3;
+                            continue;
+                        }
+                        _ => {
+                            todo!();
+                        }
+                    }
+                }
+                3 => {
+                    // q8
+                }
+                10 => {
+                    // q7 - lendo primeiro hexadecimai
+                    match self.current_char() {
+                        c  if c.is_ascii_digit() => {
+                            self.advance();
+                            state = 11;
+                            continue;
+                        }
+                        _ => {
+                            todo!();
+                        }
+                    }
+                }
+                11 => {
+                    // q7 - lendo segundo hexadecimai
+                    match self.current_char() {
+                        c  if c.is_ascii_digit() => {
+                            self.advance();
+                            state = 0;
+                            continue;
+                        }
+                        _ => {
+                            todo!();
+                        }
+                    }
                 }
                 _ => {
                     todo!();
@@ -2631,6 +2674,8 @@ impl Rust<'_> {
         let mut state = 0;
         let mut lexema = String::new();
         let mut k_sharp: usize = 0;
+        let current_row = self.row();
+        let current_col = self.col();
 
         loop {
             match state {
@@ -2675,14 +2720,14 @@ impl Rust<'_> {
                     }
                 }
                 2 => {
-                    return Token::String(Tag::STRING, current_row, current_col, lexema);
+                    return Token::StringLiteral(Tag::STRING, current_row, current_col, StringLiteralType::Raw(n_sharp), lexema);
                 }
             }
         }
         
     }
 
-    fn peek_string_prefix(&mut self) -> Token {
+    fn string_prefix(&mut self) -> Token {
         let mut state = 0;
         let mut n_char = 0;
         let mut n_sharp= 0;
@@ -3503,6 +3548,517 @@ impl Rust<'_> {
                 }
             }
         }
+
+
+        /*
+// Numeracao dos estados == numeracao das figuras/tabela:
+//
+//   0  q0   inicio
+//   1  q1   apos b ou c
+//   2  q2   apos r
+//   3  q3   contando # de abertura
+//   4  q4   corpo com escapes
+//   5  q5   corpo raw
+//   6  q6   apos a barra invertida
+//   7  q7   primeiro digito de \xHH
+//   8  q7b  segundo digito de \xHH
+//   9  q8   apos \u, esperando {
+//  10  q8a  primeiro digito dentro de {...}
+//  11  q8b  demais digitos / '_' / fechamento }
+//  12  q9   contando # de fechamento (raw)
+//  13  q10  continuacao de linha
+//
+// qf (aceita) e implementado como `break` no ponto exato da transicao de
+// aceitacao, nao como mais um valor de `state` -- ele encerra o loop.
+// qe (erro) continua representado por `todo!()`, exatamente como no codigo
+// original; numa implementacao final cada `todo!()` deveria virar um erro
+// lexico apropriado (ver observacoes ao final).
+
+enum StringKind {
+    Str,
+    ByteStr,
+    CStr,
+}
+
+// Estrutura ilustrativa do literal reconhecido. Ajuste para o `Token` real
+// do seu lexer -- o importante aqui e a maquina de estados, nao este tipo.
+struct StringLiteralInfo {
+    kind: StringKind,
+    raw: bool,
+    hashes: u32,
+    lexema: String, // texto-fonte exato, incluindo prefixo, aspas e #
+    valor: Vec<u8>, // conteudo ja decodificado (escapes resolvidos)
+}
+
+fn push_char(buf: &mut Vec<u8>, c: char) {
+    let mut tmp = [0u8; 4];
+    buf.extend_from_slice(c.encode_utf8(&mut tmp).as_bytes());
+}
+
+impl Lexer {
+    fn scan_string(&mut self) -> Token {
+        let mut state = 0;
+        let mut n_char = 0;
+        let mut n_sharp = 0u32; // n: cerquilhas da abertura
+        let mut k = 0u32;       // k: cerquilhas ja casadas no fechamento
+        let mut hex = 0u32;
+        let mut ndig = 0u32;
+        let mut is_byte = false;
+        let mut is_cstr = false;
+        let mut is_raw = false;
+        let mut lexema = String::new();
+        let mut valor: Vec<u8> = Vec::new();
+
+        loop {
+            match state {
+                // ---------- prefixo e abertura (corrigido) ----------
+                0 => match self.current_char() {
+                    'r' => {
+                        lexema.push('r');
+                        self.advance();
+                        n_char += 1;
+                        is_raw = true;
+                        state = 2;
+                        continue;
+                    }
+                    'b' => {
+                        lexema.push('b');
+                        self.advance();
+                        n_char += 1;
+                        is_byte = true;
+                        state = 1;
+                        continue;
+                    }
+                    'c' => {
+                        lexema.push('c');
+                        self.advance();
+                        n_char += 1;
+                        is_cstr = true;
+                        state = 1;
+                        continue;
+                    }
+                    '\"' => {
+                        lexema.push('\"');
+                        self.advance();
+                        n_char += 1;
+                        state = 4;
+                        continue;
+                    }
+                    _ => {
+                        todo!(); // qe: nao e inicio de literal de cadeia
+                    }
+                },
+
+                1 => match self.current_char() {
+                    'r' => {
+                        lexema.push('r');
+                        self.advance();
+                        n_char += 1;
+                        is_raw = true;
+                        state = 2;
+                        continue;
+                    }
+                    '\"' => {
+                        lexema.push('\"');
+                        self.advance();
+                        n_char += 1;
+                        state = 4;
+                        continue;
+                    }
+                    _ => {
+                        todo!();
+                    }
+                },
+
+                2 => match self.current_char() {
+                    '\"' => {
+                        lexema.push('\"');
+                        self.advance();
+                        n_char += 1;
+                        state = 5;
+                        continue;
+                    }
+                    '#' => {
+                        lexema.push('#');
+                        self.advance();
+                        n_char += 1;
+                        n_sharp += 1;
+                        state = 3;
+                        continue;
+                    }
+                    _ => {
+                        todo!();
+                    }
+                },
+
+                3 => match self.current_char() {
+                    '\"' => {
+                        lexema.push('\"');
+                        self.advance();
+                        n_char += 1;
+                        state = 5;
+                        continue;
+                    }
+                    '#' => {
+                        lexema.push('#');
+                        self.advance();
+                        n_char += 1;
+                        n_sharp += 1;
+                        state = 3;
+                        continue;
+                    }
+                    _ => {
+                        todo!();
+                    }
+                },
+
+                // ---------- q4: corpo nao-raw, com escapes ----------
+                4 => match self.current_char() {
+                    '\"' => {
+                        lexema.push('\"');
+                        self.advance();
+                        n_char += 1;
+                        break; // qf: literal completo
+                    }
+                    '\\' => {
+                        lexema.push('\\');
+                        self.advance();
+                        n_char += 1;
+                        state = 6;
+                        continue;
+                    }
+                    c => {
+                        if is_byte && !c.is_ascii() {
+                            todo!(); // qe: b"..." so aceita ASCII
+                        }
+                        lexema.push(c);
+                        push_char(&mut valor, c);
+                        self.advance();
+                        n_char += 1;
+                        // state permanece 4
+                        continue;
+                    }
+                },
+
+                // ---------- q6: logo apos a barra invertida ----------
+                6 => match self.current_char() {
+                    'n' => {
+                        lexema.push('n');
+                        valor.push(b'\n');
+                        self.advance();
+                        n_char += 1;
+                        state = 4;
+                        continue;
+                    }
+                    'r' => {
+                        lexema.push('r');
+                        valor.push(b'\r');
+                        self.advance();
+                        n_char += 1;
+                        state = 4;
+                        continue;
+                    }
+                    't' => {
+                        lexema.push('t');
+                        valor.push(b'\t');
+                        self.advance();
+                        n_char += 1;
+                        state = 4;
+                        continue;
+                    }
+                    '\\' => {
+                        lexema.push('\\');
+                        valor.push(b'\\');
+                        self.advance();
+                        n_char += 1;
+                        state = 4;
+                        continue;
+                    }
+                    '\'' => {
+                        lexema.push('\'');
+                        valor.push(b'\'');
+                        self.advance();
+                        n_char += 1;
+                        state = 4;
+                        continue;
+                    }
+                    '\"' => {
+                        lexema.push('\"');
+                        valor.push(b'\"');
+                        self.advance();
+                        n_char += 1;
+                        state = 4;
+                        continue;
+                    }
+                    '0' => {
+                        if is_cstr {
+                            todo!(); // qe: c"..." nao pode ter byte nulo
+                        }
+                        lexema.push('0');
+                        valor.push(0);
+                        self.advance();
+                        n_char += 1;
+                        state = 4;
+                        continue;
+                    }
+                    'x' => {
+                        lexema.push('x');
+                        self.advance();
+                        n_char += 1;
+                        hex = 0;
+                        state = 7;
+                        continue;
+                    }
+                    'u' => {
+                        if is_byte {
+                            todo!(); // qe: \u{...} proibido em b"..."
+                        }
+                        lexema.push('u');
+                        self.advance();
+                        n_char += 1;
+                        state = 9;
+                        continue;
+                    }
+                    c @ ('\n' | '\r') => {
+                        lexema.push(c);
+                        self.advance();
+                        n_char += 1;
+                        state = 13;
+                        continue;
+                    }
+                    _ => {
+                        todo!(); // qe: escape desconhecido
+                    }
+                },
+
+                // ---------- q7 / q7b: \xHH ----------
+                7 => {
+                    let c = self.current_char();
+                    match c.to_digit(16) {
+                        Some(d) => {
+                            lexema.push(c);
+                            hex = d;
+                            self.advance();
+                            n_char += 1;
+                            state = 8;
+                            continue;
+                        }
+                        None => {
+                            todo!();
+                        }
+                    }
+                }
+
+                8 => {
+                    let c = self.current_char();
+                    match c.to_digit(16) {
+                        Some(d) => {
+                            lexema.push(c);
+                            hex = hex * 16 + d;
+                            if !is_byte && hex > 0x7F {
+                                todo!(); // qe: \x acima de 7F fora de byte string
+                            }
+                            if is_cstr && hex == 0 {
+                                todo!(); // qe: byte nulo em c"..."
+                            }
+                            if is_byte {
+                                valor.push(hex as u8);
+                            } else {
+                                push_char(&mut valor, char::from_u32(hex).unwrap());
+                            }
+                            self.advance();
+                            n_char += 1;
+                            state = 4;
+                            continue;
+                        }
+                        None => {
+                            todo!();
+                        }
+                    }
+                }
+
+                // ---------- q8 / q8a / q8b: \u{...} ----------
+                9 => match self.current_char() {
+                    '{' => {
+                        lexema.push('{');
+                        self.advance();
+                        n_char += 1;
+                        hex = 0;
+                        ndig = 0;
+                        state = 10;
+                        continue;
+                    }
+                    _ => {
+                        todo!(); // qe: esperado { apos \u
+                    }
+                },
+
+                10 => {
+                    let c = self.current_char();
+                    match c.to_digit(16) {
+                        Some(d) => {
+                            lexema.push(c);
+                            hex = d;
+                            ndig = 1;
+                            self.advance();
+                            n_char += 1;
+                            state = 11;
+                            continue;
+                        }
+                        None => {
+                            todo!(); // qe: \u{...} exige ao menos um digito
+                        }
+                    }
+                }
+
+                11 => match self.current_char() {
+                    '_' => {
+                        lexema.push('_');
+                        self.advance();
+                        n_char += 1;
+                        // state permanece 11
+                        continue;
+                    }
+                    '}' => {
+                        lexema.push('}');
+                        if is_cstr && hex == 0 {
+                            todo!(); // qe: byte nulo em c"..."
+                        }
+                        match char::from_u32(hex) {
+                            Some(c) => push_char(&mut valor, c),
+                            None => todo!(), // qe: code point invalido
+                        }
+                        self.advance();
+                        n_char += 1;
+                        state = 4;
+                        continue;
+                    }
+                    c => match c.to_digit(16) {
+                        Some(d) => {
+                            ndig += 1;
+                            if ndig > 6 {
+                                todo!(); // qe: mais de 6 digitos em \u{...}
+                            }
+                            lexema.push(c);
+                            hex = hex * 16 + d;
+                            self.advance();
+                            n_char += 1;
+                            // state permanece 11
+                            continue;
+                        }
+                        None => {
+                            todo!();
+                        }
+                    },
+                },
+
+                // ---------- q10: continuacao de linha ----------
+                13 => match self.current_char() {
+                    c @ (' ' | '\t' | '\n' | '\r') => {
+                        lexema.push(c);
+                        self.advance();
+                        n_char += 1;
+                        // state permanece 13
+                        continue;
+                    }
+                    _ => {
+                        // retro: NAO consome o caractere, apenas volta a q4
+                        state = 4;
+                        continue;
+                    }
+                },
+
+                // ---------- q5: corpo raw ----------
+                5 => match self.current_char() {
+                    '\"' => {
+                        lexema.push('\"');
+                        self.advance();
+                        n_char += 1;
+                        if n_sharp == 0 {
+                            break; // qf: r"..." fecha na primeira aspa
+                        }
+                        k = 0;
+                        state = 12;
+                        continue;
+                    }
+                    c => {
+                        if is_byte && !c.is_ascii() {
+                            todo!();
+                        }
+                        lexema.push(c);
+                        push_char(&mut valor, c);
+                        self.advance();
+                        n_char += 1;
+                        // state permanece 5
+                        continue;
+                    }
+                },
+
+                // ---------- q9: contando # de fechamento ----------
+                12 => match self.current_char() {
+                    '#' => {
+                        lexema.push('#');
+                        self.advance();
+                        n_char += 1;
+                        k += 1;
+                        if k == n_sharp {
+                            break; // qf: fechamento completo
+                        }
+                        // state permanece 12
+                        continue;
+                    }
+                    '\"' => {
+                        // a aspa e as k cerquilhas ja lidas eram conteudo;
+                        // devolve-as ao buffer e reinicia a contagem
+                        valor.push(b'\"');
+                        for _ in 0..k {
+                            valor.push(b'#');
+                        }
+                        lexema.push('\"');
+                        self.advance();
+                        n_char += 1;
+                        k = 0;
+                        // state permanece 12
+                        continue;
+                    }
+                    c => {
+                        valor.push(b'\"');
+                        for _ in 0..k {
+                            valor.push(b'#');
+                        }
+                        push_char(&mut valor, c);
+                        lexema.push(c);
+                        self.advance();
+                        n_char += 1;
+                        k = 0;
+                        state = 5;
+                        continue;
+                    }
+                },
+
+                _ => {
+                    todo!();
+                }
+            }
+        }
+
+        let kind = if is_byte {
+            StringKind::ByteStr
+        } else if is_cstr {
+            StringKind::CStr
+        } else {
+            StringKind::Str
+        };
+
+        Token::StringLiteral(StringLiteralInfo {
+            kind,
+            raw: is_raw,
+            hashes: n_sharp,
+            lexema,
+            valor,
+        })
+    }
+}         */
     }
 }
 
